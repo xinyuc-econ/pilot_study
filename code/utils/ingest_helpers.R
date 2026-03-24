@@ -1,5 +1,7 @@
 # Purpose: helper functions for source-aware pilot ingest.
 
+# Shared Ingest Utilities ----
+
 ingest_sources <- c("faa_flat", "aviationdb")
 
 trim_missing <- function(x) {
@@ -37,6 +39,8 @@ parse_year_subset <- function(years = NULL) {
   sort(unique(as.integer(years)))
 }
 
+# Source Validation and File Discovery ----
+
 validate_ingest_source <- function(source) {
   if (!source %in% ingest_sources) {
     stop(
@@ -72,6 +76,7 @@ filter_years <- function(discovered_years, years) {
   intersect(discovered_years, years)
 }
 
+# FAA flat files arrive as paired basic and cert files for the same year.
 discover_faa_flat_inputs <- function(paths, years = NULL) {
   basic_files <- list.files(
     paths$raw_airmen_data,
@@ -111,6 +116,7 @@ discover_faa_flat_inputs <- function(paths, years = NULL) {
   inputs
 }
 
+# AviationDB already ships one TSV per year, so discovery is simpler.
 discover_aviationdb_inputs <- function(paths, years = NULL) {
   files <- list.files(
     paths$raw_aviationdb_data,
@@ -147,6 +153,9 @@ discover_ingest_inputs <- function(paths, source = "faa_flat", years = NULL) {
   )
 }
 
+# Shared Validation ----
+
+# Both ingest paths are expected to produce one pilot row per year.
 assert_unique_pilot_year <- function(data, source) {
   duplicates <- data |>
     dplyr::count(.data$unique_id, name = "n") |>
@@ -164,6 +173,9 @@ assert_unique_pilot_year <- function(data, source) {
   }
 }
 
+# Source Readers ----
+
+# This reader keeps only the minimal shared schema used by both ingest sources.
 read_faa_flat_year <- function(year, basic_path, cert_path) {
   basic <- readr::read_csv(
     basic_path,
@@ -209,6 +221,7 @@ read_faa_flat_year <- function(year, basic_path, cert_path) {
     )
 }
 
+# This reader preserves the richer FAA columns needed to replicate legacy cleaning.
 read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
   basic <- readr::read_csv(
     basic_path,
@@ -282,6 +295,7 @@ read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
     )
 }
 
+# AviationDB already matches the future minimal contract closely.
 read_aviationdb_year <- function(year, aviationdb_path) {
   data <- readr::read_tsv(
     aviationdb_path,
@@ -309,6 +323,9 @@ read_aviationdb_year <- function(year, aviationdb_path) {
     )
 }
 
+# Dataset Builders ----
+
+# This is the source-agnostic canonical ingest output used for future migration work.
 build_pilot_ingest_dataset <- function(paths, source = "faa_flat", years = NULL) {
   inputs <- discover_ingest_inputs(paths, source, years)
 
@@ -326,6 +343,7 @@ build_pilot_ingest_dataset <- function(paths, source = "faa_flat", years = NULL)
     dplyr::arrange(.data$year, .data$unique_id)
 }
 
+# This FAA-only builder exists so the cleaning stage can still replicate legacy outputs.
 build_faa_rich_ingest_dataset <- function(paths, years = NULL) {
   inputs <- discover_ingest_inputs(paths, source = "faa_flat", years = years)
 

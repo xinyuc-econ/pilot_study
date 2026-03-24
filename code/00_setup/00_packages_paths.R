@@ -2,6 +2,8 @@
 # Inputs: local raw data root at /Users/xinyuc/Documents/pilots/data
 # Outputs: none; scripts source this file to access `paths` and shared constants.
 
+# Package Assumptions ----
+
 required_packages <- c(
   "readr",
   "dplyr",
@@ -13,11 +15,15 @@ required_packages <- c(
   "testthat"
 )
 
+# Project Paths ----
+
 project_root <- normalizePath(".", winslash = "/", mustWork = TRUE)
 
 project_path <- function(...) {
   file.path(project_root, ...)
 }
+
+# External Data Locations ----
 
 raw_data_root <- "/Users/xinyuc/Documents/pilots/data"
 
@@ -36,6 +42,9 @@ paths <- list(
   tables = project_path("output", "tables")
 )
 
+# Path Validation ----
+
+# Fail early if the expected external folders are not available.
 required_directories <- c(
   paths$raw_airmen_data,
   paths$raw_aviationdb_data,
@@ -55,6 +64,8 @@ if (length(missing_directories) > 0) {
     call. = FALSE
   )
 }
+
+# Shared Constants ----
 
 excluded_territories <- c(
   "PR", "VI", "AA", "AE", "GU", "AP", "AS", "MP", "FM", "MH", "PW"

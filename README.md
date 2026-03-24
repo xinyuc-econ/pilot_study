@@ -9,7 +9,7 @@ This repository is the clean working copy for the project. Legacy scripts are ke
 - `code/01_ingest/`: source-aware raw input ingestion and harmonization
 - `code/02_clean/`: sample restrictions and analysis-ready datasets
 - `code/03_analysis/`: summary tables and analysis datasets
-- `code/04_plots/`: figures generated from derived data
+- `code/04_plots/`: figures generated from derived data, including legacy sanity-check plots
 - `code/99_validation/`: temporary legacy-vs-clean validation scripts
 - `code/utils/`: reusable helper functions
 - `data/intermediate/`: generated pooled or harmonized datasets

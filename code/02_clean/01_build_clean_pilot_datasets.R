@@ -2,13 +2,18 @@
 # Inputs: FAA-rich pooled panel, state crosswalk, and total working population files
 # Outputs: `data/derived/main_us_pilots_any.csv`, `data/derived/main_us_pilots_atr.csv`, and `data/derived/sum_stat_prop_atr_pilots.csv`
 
+# Setup ----
+
 source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
+# The cleaner still reads the FAA-rich intermediate so the legacy sample logic can be replicated.
 input_path <- Sys.getenv(
   "FAA_RICH_INGEST_INPUT",
   unset = file.path(paths$intermediate, "faa_pilot_rich_panel.csv")
 )
+
+# Input Loading ----
 
 pilot_data <- readr::read_csv(
   input_path,
@@ -18,6 +23,8 @@ pilot_data <- readr::read_csv(
 ) |>
   dplyr::mutate(year = as.integer(.data$year)) |>
   dplyr::filter(.data$year != 2025)
+
+# Sample Restrictions and Enrichment ----
 
 processed_pilot_data <- add_us_migration_flags(pilot_data)
 always_in_main_us_pilots <- restrict_always_in_main_us(
@@ -33,12 +40,16 @@ main_us_pilots_atr <- build_main_us_pilots_atr(main_us_pilots_any)
 tot_working_pop <- load_tot_working_population(paths)
 sum_stat_prop_pilots <- build_sum_stat_prop_pilots(main_us_pilots_atr, tot_working_pop)
 
+# Outputs ----
+
 readr::write_csv(main_us_pilots_any, file.path(paths$derived, "main_us_pilots_any.csv"))
 readr::write_csv(main_us_pilots_atr, file.path(paths$derived, "main_us_pilots_atr.csv"))
 readr::write_csv(
   sum_stat_prop_pilots,
   file.path(paths$derived, "sum_stat_prop_atr_pilots.csv")
 )
+
+# Reporting ----
 
 message("Wrote cleaned pilot datasets to ", paths$derived)
 message("main_us_pilots_any rows: ", nrow(main_us_pilots_any))

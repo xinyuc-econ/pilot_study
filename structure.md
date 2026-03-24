@@ -16,7 +16,7 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 - `code/01_ingest/`: read external raw files from supported sources, standardize them, and build pooled intermediate datasets
 - `code/02_clean/`: define the analytic sample and create derived datasets
 - `code/03_analysis/`: build summary tables and analysis-ready outputs
-- `code/04_plots/`: generate figures from derived data
+- `code/04_plots/`: generate figures from derived data, including migrated legacy sanity-check plots
 - `code/99_validation/`: compare clean outputs against legacy outputs during migration
 - `code/utils/`: reusable helper functions used across stages
 

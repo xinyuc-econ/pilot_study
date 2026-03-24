@@ -1,7 +1,11 @@
+# Test Setup ----
+
 project_root <- normalizePath(file.path("..", ".."), winslash = "/", mustWork = TRUE)
 
 source(file.path(project_root, "code", "00_setup", "00_packages_paths.R"))
 source(file.path(project_root, "code", "utils", "ingest_helpers.R"))
+
+# Discovery and Parsing Tests ----
 
 testthat::test_that("year extraction works across source file names", {
   testthat::expect_equal(extract_year_from_path("RELDOMCB_2009.csv"), 2009)
@@ -24,6 +28,8 @@ testthat::test_that("AviationDB discovery returns yearly TSV files", {
   testthat::expect_equal(unname(sort(inputs$year)), c(2001, 2022))
   testthat::expect_true(all(inputs$source == "aviationdb"))
 })
+
+# Canonical Schema Tests ----
 
 testthat::test_that("both sources normalize to the same canonical columns", {
   faa_data <- build_pilot_ingest_dataset(paths, source = "faa_flat", years = 2009)
