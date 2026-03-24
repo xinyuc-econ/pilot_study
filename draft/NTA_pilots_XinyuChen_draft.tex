@@ -1,0 +1,484 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+
+\geometry{tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage{array}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\allowdisplaybreaks
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage[normalem]{ulem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{threeparttablex,booktabs}
+
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{mathtools}
+\usepackage{cancel}
+\usepackage{comment}
+\raggedbottom
+\onehalfspacing
+\usepackage{lscape}
+\usepackage{xcolor}
+\usepackage{comment}
+\usepackage{subcaption}
+\usepackage{pdflscape} 
+\usepackage[absolute,overlay]{textpos} % <-- key package for positioning
+\usepackage{ragged2e}
+
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+\usepackage{tabularx,booktabs}  % in your preamble
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}  % if you want left‐aligned X columns
+
+\hypersetup{colorlinks, citecolor=blue,urlcolor=blue,allcolors=blue}
+
+\usepackage[backend=bibtex,style=authoryear,sorting=nyt]{biblatex}
+\addbibresource{pilots.bib}
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+
+\title{How State Income Taxes Affect Workers’ Residential Location: Evidence from a Pilot Study\footnote{Xinyu Chen, University of Michigan, xinyuc@umich.edu. Preliminary draft. All errors are my own. I thank Jim Hines, Joel Slemrod, Damián Vergara, and David Agrawal for guidance and feedback on this project. I also thank the participants of the 2025 MTAXI and the Fall 2025 labor lunch seminar for helpful comments.}}  
+\author{Xinyu Chen}
+
+
+\begin{document}
+	\maketitle
+	
+	
+\begin{abstract}
+	Using Airmen Certification data from the Federal Aviation Administration from 2009 to 2022, this paper examines the effect of state personal income taxes on the residential location decisions of U.S. commercial airline pilots. Highly paid, able to have generous vacations, and allowed to fly to work for interstate commutes, pilots arguably are less constrained by their employers’ location than the general population and “can live where they do because that is where they want to live” (Parsons 1979). I document that pilots disproportionately reside in zero-income-tax states. Using both a migration flow and a stock model, I find suggestive evidence that state income taxes matter for the location choice of pilots, and estimate the elasticity of mobility relative to net-of-tax-rate. By focusing on one occupation that is extremely mobile long before the rise of remote work, this paper hopes to shed light on how state income taxes might distort location choices in the long run in a world where a larger segment of the workforce becomes more mobile due to the persistence of remote work arrangements.
+\end{abstract}
+
+\newpage
+\begin{textblock*}{0.75\textwidth}(2.6in, 0.6in)
+	\small
+	\justifying
+	\emph{``In looking for [a group] ...that has moved about and for whom the inertia born of long residence in one or a few places would be minimal... The group that comes closest to fitting my bill ...may be the country's 36,000 male commercial airline pilots.''}\\
+	\makebox[\textwidth][r]{\textit{---Parsons (1979)}}
+\end{textblock*}
+
+\vspace*{0.2in}   % THIS works, because it's before \section in the same page body
+
+\section{Introduction}
+
+Without the possibility of remote work, workers in most occupations are constrained by where their employers are when deciding where to live. The feasibility of commuting can mask the true effect of state taxes on workers' geographic preferences, making it challenging to study the mobility response of workers to local tax changes. Commercial airline pilots are an exception to this. Highly paid, able to have generous vacations, and allowed to fly to work for interstate commutes, pilots arguably can ``live where they do because that is where they want to live" (Parsons 1979). This makes pilots an ideal group for the study of taxes and geographic labor mobility.
+
+Where do U.S. pilots live? Figure (\ref{fig:intro_graph}) below provides motivating evidence that state personal income taxes might matter for the residential location choice of pilots. The figure plots the residuals from regressing pilot share, defined as the number of pilots in a state over the total number of pilots, on state total working population using 2024 data. The residuals capture the density of pilots in a given state that's unexplained by the size of the state's labor force. Figure (\ref{fig:intro_graph}) shows that, several states with the highest density of pilots even after accounting for the state size---in particular, Florida---are states with a zero personal income tax rate.
+
+
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.4]{../output_graphs/resid_pilots_share_map_zerotax_2024.png}
+	\caption{Where do U.S pilots live? A motivational graph.}
+	\subcaption*{\scriptsize Notes: This figure plots the residuals from regressing pilot share on state total working population. Pilot share computed as the number of pilots in a state over the total number of pilots. Data on the number of pilots is computed using the FAA Airmen Certification database. Data on state total working population is computed using the NBER CPS MORG data.}
+	\label{fig:intro_graph}
+\end{figure}
+
+This paper addresses the following research question: How do state personal income taxes affect the residential location of U.S. commercial airline pilots? Using the Airmen Certification database from the Federal Aviation Administration and the NBER TAXSIM program,  I try to shed light on this question using both a migration flow model (Moretti and Wilson 2017) and a stock model (Agrawal and Foremny 2019). I document that pilots disproportionately live in zero-income tax states. Preliminary regression results suggest that the elasticity of mobility relative to the net-of-average-income-tax rate for U.S. commercial airline pilots (around 3.2) is higher than the estimates in the literature. However, my current estimates are not precise.
+
+
+\textbf{Related literature.} This paper is closely related to the literature on taxes and within-country migration. The question of how taxes affect geographic labor mobility has long been of interest in the public finance literature (Tiebout 1956; Rosen 1979; Roback 1982; Feldstein and Wrobel 1998; Bakija and Slemrod 2004; Schmidheiny 2006). However, as reviewed in Kleven et al. (2020), due to challenges in obtaining accurate migration and local-level tax data , empirical evidence on tax-induced geographic labor mobility has expanded only recently. Much of the more recent studies on this topic circumvents these data constraints by focusing on either the ``super rich'' (Young et al. 2016; Martinez 2017; Agrawal and Foremny 2019; Agrawal et al. 2025), or on specific occupations such as scientists (Moretti and Wilson 2017), golfers (Agrawal and Tester 2024), and in the cross-country context football players (Kleven et al. 2013). For the more general population, while some studies provide evidence for European countries using administrative data (Liebig et al. 2017; Schmidheiny and Slotwinski 2018), evidence for the U.S is still quite scarce. 
+
+This paper intends to contribute to this strand of literature in three ways. First, while pilots are on average high-income, pilots can have a range of income levels depending on seniority and airline type (major versus regional). By focusing on a high-income occupation that's less likely to be the ``super rich'', this paper seeks to capture a larger segment of the labor force. Second, empirical evidence on how U.S. state taxes affect geographic labor mobility is still quite scarce. This paper would provide additional evidence for the U.S. Third, since pilots, who like remote workers are less constrained by their employers' location when deciding where to live because of ``jumpseat'' arrangements that allow them to fly to work, this paper hopes to shed light on how state income taxes may distort residential choices in the long run as remote work persists.
+
+This paper proceeds as follows. Section 2 describes the data sources and institutional details. Section 3 presents the empirical analyses. Section 4 discusses future steps and concludes.
+
+
+
+\section{Data}
+
+\subsection{Data and institutional details on pilots}
+ I use the Airmen Certification database from the Federal Aviation Administration (FAA) to identify residential location changes among pilots based in the U.S. The Airmen Certification branch of the FAA maintains these records and updates them monthly. This is a public dataset that can be downloaded directly from the FAA website\footnote{\url{https://www.faa.gov/licenses_certificates/airmen_certification/releasable_airmen_download}}. The Wendell H. Ford Aviation Investment and Reform Act for the 21st Century, enacted on April 5, 2000, mandates the release of these records, while also allowing airmen the option to withhold their address information. Airmen who choose to withhold their addresses are not included in the database. Airmen can opt out at any time, and once they do so, their information will no longer appear in any updated versions of the database. Therefore, even though this dataset has always been public, due to privacy concerns regarding the individuals who opted out of the dataset, the FAA does not store historical versions of the dataset on their website. I obtained historical data from the Internet WayBack Machine for a subset of months and years between 2009 and 2024. Specifically, the years of data that I have access to are 2009, 2010, 2011, 2014, 2015, 2016, 2017, 2022, and 2024. 
+
+The Airmen Certification data contains information on both domestic-based (based in the U.S.) and foreign-based pilots and non-pilot air crew members. For the purpose of this paper, I focus on domestic-based pilots residing in the 50 states and D.C. The data files are divided into basic files and certificate files. The basic files contain information on each pilot's full name, precise residential address (street address, state, zip code, country), medical class, medical date, and medical expire date. The certificate files contain information on each pilot's certification level and expire date. A pilot certificate has 6 levels, including 1) airline transport pilot (A), 2) commercial pilot (C), 3) private pilot (P), 4) recreational pilot (V), 5) sport pilot (T), and 6) student pilot (S). Only pilots with an active certificate are in the dataset. Among the pilot certificate holders, no one holds more than one certificate level. 
+
+For the main analysis, I restrict the sample to pilots with an airline transport pilot certificate, since major commercial airlines require this certification, and I assume that major commercial airline pilots represent the subgroup within pilots who have the greatest flexibility regarding their place of residence. An airline transport pilot certificate is the highest level of pilot certificate issued by the FAA\footnote{Pilots with a commercial pilot certificate can fly for compensation, but cannot work for major airlines.}. It has the most stringent requirement among all the certificate levels, including 1500 hours of flight time and a first class medical certificate. Figure (\ref{fig:pilot_in_data}) below shows the number and composition of pilot certification holders observed in the Airmen Certification dataset in each year. Figure (\ref{fig:pilot_composition}) shows that the total number of pilot certification holders in the data is slowly decreasing from around 500,000 in 2009 to around 420,000 in 2024. As I will show later, this decline is likely due to more pilots opting out of the dataset over time. Figure (\ref{fig:pilot_composition}) also presents the composition of pilots with different certification levels. It shows that airline transport pilot certification holder is, in fact, a relatively small fraction, representing about a quarter of all pilot certification holders. More than half of the pilot certification holders have a certificate level other than airline transport pilot and commercial pilot. Figure (\ref{fig:n_atr}) plots the number of airline transport pilots in the data. In each year of available data, I observe around 110,000 airline transport pilots.
+
+	\begin{figure}[H]
+		\centering
+		\begin{subfigure}[b]{0.55\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{../output_graphs/num_composition_pilots_by_year.png}
+			\caption{Number and composition of pilot certification holders}
+			\label{fig:pilot_composition}
+		\end{subfigure}
+		\hfill
+		\begin{subfigure}[b]{0.43\textwidth}
+			\centering
+			\includegraphics[width=\textwidth]{../output_graphs/num_atr_pilots_by_year.png}
+			\caption{Number of airline transport pilots observed each year}
+			\label{fig:n_atr}
+		\end{subfigure}
+		\caption{Composition and Number of Pilot Certification Holders in the Airmen Certification Data}
+		\label{fig:pilot_in_data}
+	\end{figure}
+
+ Special state income tax rules apply to commercial airline pilots. According to \href{https://www.law.cornell.edu/uscode/text/49/40116}{49 U.S. Code § 40116}, air carrier (part 121 or 135 operators) employees are subject to the income tax laws of 1) primarily, the state of residency, and 2) any other state in which the scheduled flight time is more than 50\% of the total flight time. However, how the scheduled flight time is allocated if a pilot's flight schedule involves different states, and to what extent is the 50\% rule enforced is not very straightforward, and appears to depend on the state. For example, according to Massachusetts's law, those who earn more than 50\% of their \emph{pay} in Massachusetts'' need to pay Massachusetts taxes, and if the pilot is unable to determine the amount of income that should be allocated to  Massachusetts, they should use an apportionment factor that depends on the number of ``Massachusetts workdays'' \footnote{\url{https://www.mass.gov/directive/directive-08-2-taxation-of-non-resident-flight-crew-members}}. Since I am unable to observe the flight schedule or the home airport of the pilots in the data, for now I abstract away from the 50\% rule and assume that all pilots are taxed by their state of residence. 
+
+\textbf{Data limitations.} There are two main limitations of my data. First, due to difficulty obtaining historical records of the Airmen Certification data, while the Airmen Certification dataset goes back to 2001, I currently only have access to 10 years of data that are non-consecutive. The gaps across years exacerbate measurement error in analyses that rely on identifying pilots who move, since additional assumptions are required to infer the timing of their moves.
+
+Second, the possibility of opting out of the dataset raises concerns about selection bias. Due to the nature of the data, it is not possible to distinguish whether a pilot’s disappearance from the dataset reflects a choice to withhold address information or other factors such as retirement or a career change. Figure (\ref{fig:data_coverage}) below describes how well the Airmen Certificate data covers the entire population of domestic airline transport pilots according to official FAA aggregate statistics on active U.S. civil airmen\footnote{\url{https://www.faa.gov/data_research/aviation_data_statistics/civil_airmen_statistics}}. The gap between the raw counts of airline transport pilots in the Airmen Certification data and the official aggregate data grows over the years. The coverage declines from above 80\% in 2014 to about 65\% in 2024. This raises concerns about whether the sample of airline transport pilots I observe is a random sample. Assuming that pilots who wish to withhold their addresses are more likely to be the ones strategically reporting their state of residence as a lower income tax state as a way of tax avoidance, the estimates of my analyses could be interpreted as a lower bound of the effect of state income taxes on migration. Using state-level data on official FAA aggregate statistics, available from 2016 to 2024,  I plot the percentage of airline transport pilots covered in each state by year, which is shown in Figure (\ref{fig: state_data_coverage}) in the appendix. It appears to be the case that the zero income tax states have relatively lower coverage than the other states. In particular, Florida, despite having one of the highest share of pilots relative to the total number of pilots computed using the Airmen Certification data, as shown in Figure (\ref{fig:prop_atr_pilots_allpilots_map_2024}), has the lowest data coverage (56\%) in 2024. This provides some suggestive evidence to my tax avoidance hypothesis. However, I acknowledge that at the moment this is only speculative.
+
+
+	\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.49\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{../output_graphs/airmen_atr_coverage_count.png}
+		\subcaption{Number of airline transport pilots covered}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.49\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{../output_graphs/airmen_atr_coverage_percentage.png}
+		\subcaption{Percentage of airline transport pilots covered}
+	\end{subfigure}
+	\caption{Data Coverage by Year}
+	\label{fig:data_coverage}
+\end{figure}
+
+\subsection{Data on personal income taxes}
+
+To construct the average state PIT rates, and average overall PIT rates from 2009-2022, I follow the approach in Moretti and Wilson (2017). I obtain the AGI income floor for the 90th, 95th, 96th, 97th, 98th, and 99th income percentile taxpayer from the SOI Individual Tax Stats tables\footnote{\url{https://www.irs.gov/statistics/soi-tax-stats-individual-statistical-tables-by-tax-rate-and-income-percentile\#earlyrelease}}, and use these nominal income levels as inputs for the NBER TAXSIM program (Feenberg and Coutts 1993). I assume that the representative pilot is married. My main PIT measure is the average overall PIT for a hypothetical pilot at the 95th income percentile. I choose to use the average overall PIT rate because the average tax rate should be the tax measure of interest for migration decisions. The reason for using the 95th income percentile is that, according to the BLS, the median annual wage for airline pilots, copilots, and flight engineers is \$219,140 in May 2023. After taking into account the income of the pilot's spouse, it approximately corresponds to the AGI Floor on the 95th income percentile in 2022, which is \$261,591. For now, I abstract away from other tax considerations such as capital gains, dependent exemptions, mortgage deductions, and charitable contributions.
+
+I use TAXSIM to simulate federal and state tax measures for a representative taxpayer from a given state in a given year from 2009 to 2022. The latest version of TAXSIM incorporates state income tax laws through 2021 and federal law through 2023. State taxes in 2022 is calculated using the "real" value of the 2021 law. Average state income tax rate is calculated as state income tax liability divided by the federal AGI. Average income tax rate is calculated as the sum of federal and state tax liabilities divided by the federal AGI. Table (\ref{table:sumstat_pit}) below presents the summary statistics for the three different PIT measures for a taxpayer at the 95th income percentile. Figure (\ref{fig:atr_maps}) plots the trend in the simulated average PIT rate for a hypothetical pilot at the 95th income percentile in each state over time. The map plot shows the variations in the average PIT rate across states over time. Notably, it shows a general decline in the average PIT rates across all states in 2018, which reflects the changes under the Tax Cuts and Jobs Act (TCJA) of 2017. Figure (\ref{fig:atr_maps}) raises concerns about whether there are enough variations in the tax measure within states over time. I will revisit this point in the empirical analysis section.
+
+\begin{table}[!htbp] \centering 
+	\caption{Summary statistics on simulated PIT measures} 
+	\label{table:sumstat_pit} 
+	\small 
+	\begin{tabular}{@{\extracolsep{5pt}}lccccc} 
+		\\[-1.8ex]\hline 
+		\hline \\[-1.8ex] 
+		Statistic & \multicolumn{1}{c}{N} & \multicolumn{1}{c}{Mean} & \multicolumn{1}{c}{St. Dev.} & \multicolumn{1}{c}{Min} & \multicolumn{1}{c}{Max} \\ 
+		\hline \\[-1.8ex] 
+		Marginal state tax rate & 714 & 4.54 & 2.74 & 0.00 & 9.90 \\ 
+		Ave. state tax rate & 714 & 4.33 & 2.32 & 0.00 & 8.46 \\ 
+		Ave. tax rate & 714 & 23.32 & 2.69 & 16.87 & 27.87 \\ 
+		\hline \\[-1.8ex] 
+		\multicolumn{6}{l}{Notes: Measures constructed using NBER TAXSIM. 95th income percentile.} \\ 
+	\end{tabular} 
+\end{table} 
+
+\section{Empirical Analysis}
+
+\subsection{Pilots disproportionately reside in zero-personal-income tax states}
+
+I first present a piece of motivating evidence on the relationship between the concentration of pilots in a state and the average state PIT rate. The concentration of pilots in a state is defined as the number of pilots residing in a state divided by that state's total working population, which I computed using the NBER CPS MORG data \footnote{\url{https://www.nber.org/research/data/current-population-survey-cps-merged-outgoing-rotation-group-earnings-data}}. I scale the number of pilots residing in a state by the state's total working population to account for the fact that states with a larger labor force might mechanically have more pilots. Figure (\ref{fig:motivating_binscatter}) plots this relationship and adds a cubic polynomial fit. It illustrates that while at the first glance, it might appear to be the case that the relationship between the concentration of pilots and the state average income tax rate has a negative slope, this pattern is primarily driven by the disproportionate concentration of pilots in states with zero personal income taxes. 
+
+Alaska has the highest concentration of pilots for reasons unrelated to its zero-income-tax status. Figure (\ref{fig:motivating_binscatter_noAK}) in the appendix shows that the same pattern holds even excluding Alaska.
+
+
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.35]{../output_graphs/binscatter_astr_pilots.png}
+	\caption{Relationship between the share of pilots relative to total state working population and the average state tax rate}
+	\subcaption*{\scriptsize Notes: Binscatter plot with pooled state-year observations using available data from 2009 to 2022.}
+	\label{fig:motivating_binscatter}
+\end{figure}
+
+
+
+
+\subsection{Migration Flow Model}
+
+I first explore the effect of state personal income taxes on the migration decision of pilots using the migration flow model in Moretti and Wilson (2017). Table (\ref{table:sum_stats_movers}) below presents summary statistics on the number and fraction of pilots who I observe in the data as interstate movers. 
+
+% latex table generated in R 4.4.2 by xtable 1.8-4 package
+% Mon Jul 21 17:19:35 2025
+\begin{table}[H]
+	\centering
+	\small
+	\begin{tabular}{cccc}
+		\hline
+		Time period & \# of pilots & \# of movers & Ave. monthly \% moved \\ 
+		\hline
+		11/2009 - 05/2010 & 108551 & 2093 & 0.32 \\ 
+		05/2010 - 09/2011 & 108147 & 5170 & 0.30 \\ 
+		09/2011 - 09/2014 & 117466 & 9892 & 0.23 \\ 
+		09/2014 - 09/2015 & 119124 & 5516 & 0.39 \\ 
+		09/2015 - 11/2016 & 118937 & 5949 & 0.36 \\ 
+		11/2016 - 06/2017 & 117678 & 2976 & 0.36 \\ 
+		06/2017 - 06/2019 & 117988 & 8612 & 0.30 \\ 
+		06/2019 - 10/2022 & 109754 & 10099 & 0.23 \\ 
+		10/2022 - 09/2024 & 109947 & 5811 & 0.23 \\ 
+		\hline
+	\end{tabular}
+	\caption{Proportion of pilots who moved interstate by time period} 
+	\subcaption*{\scriptsize Notes: Own calculations from the Airmen Certification data.}
+	\label{table:sum_stats_movers}
+\end{table}
+
+The table also illustrates the limitation of my current data. The year intervals are not consistent, and even for some consecutive years, the data may be from different months, leading to measurement errors on the migration rate. If I observe an address change between year $t$ and $t + h$, $h \in [1, 3]$, I assume that the pilot moved in $t+h$. Table 5 in the appendix presents total state-to-state migration flow for the 25 states with the largest number of pilots.
+
+\textbf{Simple theoretical framework.}  I first outline a simple theoretical framework that closely follows Moretti and Wilson (2017). The framework provides intuition and guides the migration flow regression model that I run. Consider a pilot $i$, who lived in state $o$ in the previous year, and is living in state $d$ in year $t$, with the following utility function:
+\begin{align}
+	U_{iodt} \,= \, 
+	\underbrace{\alpha \underbrace{\log(1 - \tau_{dt})}_{\substack{\text{net-of-income-tax}\\\text{rate}}}
+		\quad + \quad \alpha \underbrace{\log(w_{dt})}_\text{wage} 
+		\quad + \, \underbrace{Z_d}_\text{amenities} 
+		\, - \, \underbrace{C_{od}}_{\substack{\text{moving cost;}\\\text{is $0$ if $d = o$}}}
+	}_\text{{\color{black}$\equiv u_{odt}$, non-idiosyncratic}}
+	\, + \, \underbrace{e_{iodt}}_{\substack{\text{idiosyncratic}\\\text{location preferences}}}
+\end{align}
+where  $1 - \tau_{dt}$ is the net-of-income tax rate, $w_{dt}$ is the wage in the destination state, $Z_d$ is the amenities in the destination state, $C_{od}$ is the moving cost from the origin state to the destination state, and finally $e_{iodt}$ is the pilot's time-varying idiosyncratic preference for residential location. Note that $C_{od}$ captures the fact that moving from California to Michigan is likely to be much more costly than moving from Ohio to Michigan. $e_{iodt}$ rationalizes the existence of migration flows even absent changes in the PIT rate, wages, amenities, and moving costs.
+
+Assume that $e_{iodt}$ is i.i.d and $\sim$ Type 1 Extreme Value $(0, 1)$. Then, the probability of choosing to move to $d$, versus to stay in $o$ at time $t$, can be written as $P_{odt} = \frac{\exp(\frac{u_{odt}}{\sigma})}{\sum_{d'} \exp(\frac{u_{od't}}{\sigma})}$ and $P_{oot} = \frac{\exp(\frac{u_{oot}}{\sigma})}{\sum_{d'} \exp(\frac{u_{od't}}{\sigma})}$, respectively. Taking the log of the ratio between $P_{odt}$ and $P_{oot}$ yields
+\begin{align*}\label{model_equa}
+	 \log \Big(\frac{P_{odt}}{P_{oot}}\Big) & = u_{odt} - u_{oot} \\
+	 & = \alpha [\log(1 - \tau_{dt}) - \log(1 - \tau_{ot})] + \alpha [\log(w_{dt}) - \log(w_{ot})]+ [Z_d - Z_o]  -C_od \numberthis
+\end{align*}
+\noindent
+where $\log \Big(\frac{P_{odt}}{P_{oot}}\Big)$ on the LHS is the migration log odds ratio. The RHS of equation (\ref{model_equa}) shows that the migration log odds ratio can be written as the difference between the non-idiosyncratic part of pilot $i$'s utility from moving to state $d$ and their utility from staying in state $o$. Rearranging the terms reveal that the migration log odds ratio depends on the differences in the net-of-income-tax rate, wages, and amenities between the destination state and origin state, and the cost of moving between the two states. I make the simplifying assumption that the wage of a pilot does not depend on their residential location\footnote{While this is quite a strong assumption, anecdotally pilots can live anywhere as long as they can get to work on time, which is made possible by arrangements such as ``jumpseats''. In addition, due to the lack of information on wage in the Airmen Certification data, I am unable to observe the wage differences across pilots residing in different states.}. \\
+
+\textbf{Regression specification.} Equation (\ref{model_equa}) guides the main regression specification that I run, which is as follows
+\begin{align} \label{migflow_spec}
+	 \underbrace{\log \Big(\frac{P_{odt}}{P_{oot}}\Big)}_{\substack{\text{migration}\\\text{log odds ratio}}}
+	 = \beta_0 + \beta_1 \underbrace{[\log(1 - \tau_{dt}) - \log(1 - \tau_{ot})]}_{\substack{\text{log dest-origin}\\\text{net-of-tax diff.}}}
+	+ \underbrace{\gamma_t}_{\substack{\text{year}\\\text{FE}}}
+	+ \underbrace{\gamma_d}_{\substack{\text{destination}\\\text{state FE}}}
+	+ \underbrace{\gamma_o}_{\substack{\text{origin}\\\text{state FE}}}
+	+ \underbrace{\gamma_{od}}_{\substack{\text{state-pair}\\\text{FE}}}
+	+ u_{odt}
+\end{align}
+where $o$ indexes the origin state, $d$ indexes the destination state, and $t$ indexes year. The dependent variable is the migration log odds ratio, which is computed as the log of the ratio between the number of pilots who moved from the origin state $o$ to the destination state $d$ and the number of pilots who stayed in the origin state $o$ in year $t$. The RHS variable is the log net-of-average-personal-income tax rate difference between the destination state and the origin state. $\gamma_t$ is year fixed effects, $\gamma_d$ is destination state fixed effects,  $\gamma_o$ is origin state fixed effects, and $\gamma_{od}$ is origin-destination state pair fixed effects. $u_{odt}$ is the error term. I cluster the standard errors three-way at the destination-origin state pair, origin state by year, and destination state by year level. This regression specification follows Moretti and Wilson (2017). 
+
+\textbf{Results.} First, I present the results from the migration flow model visually. Figure (\ref{fig:migflow}) is a binscatter plot that has the migration log odds ratio on the y-axis, and the log net-of-average-personal-income tax rate difference between the destination state and the origin state on the x-axis. Both variables are demeaned of their year and state-pair means to account for the origin-destination state pair and year fixed effects. The positive slope is in line with the intuition that when the net-of-tax rate in the destination state is more preferential relative to that in the origin state, pilots are more likely to move from the origin state to the destination state.
+
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.45]{../output_graphs/mw_reg_binscatter_diff.png}
+	\caption{Migration flow regression results, log destination-origin state net-of-tax difference}
+	\subcaption*{\scriptsize Notes: This figure is a binscatter plot with the migration log odds ratio on the y-axis and the log net-of-average-personal-income tax rate difference between the destination state and the origin state on the x-axis. Variables demeaned of year and state-pair means.}
+	\label{fig:migflow}
+\end{figure}
+
+To provide more intuition, Figure (\ref{fig:migflow_od}) decomposes Figure (\ref{fig:migflow}) and shows the analogous binscatter plots for the origin state log net-of-tax rate and the destination state log net-of-tax rate separately. The figures show that, pilots are less likely to migrate out of a state with a high net-of-tax rate, and more likely to migrate into a state with a high net-of-tax rate. However, one notable caveat across all three binscatter plots is that, rather than reflecting a smooth gradient, the slope appears to be mainly driven by outliers. One possible interpretation is that, state income taxes might only matter for pilots who are deciding to migrate between states at the extremes of the tax-rate distribution. Small differences in state tax rates may have relatively limited effects on migration decisions. 
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.32]{../output_graphs/mw_reg_binscatter_both.png}
+	\caption{Migration flow regression results, origin versus destination state log net-of-tax rate}
+	\subcaption*{\scriptsize Notes: These two figures are binscatter plots with the migration log odds ratio on the y-axis and the log net-of-average-personal-income tax rate for the origin state (left) and for the destination state (right) on the x-axis. Variables demeaned of year and state-pair means.}
+	\label{fig:migflow_od}
+\end{figure}
+
+
+Table (\ref{table:migflow}) presents the point estimates and standard errors for $\beta_1$. The columns correspond to different specifications that use tax measures at alternative income percentiles as the independent variable. The main specification that uses average income tax rates simulated for a representative pilot at the 95\% income percentile is column (2). It shows that a 1\% increase in the log net-of-average-personal-income tax rate difference between the destination state and the origin state is associated with a 3.189\% increase in the migration log odds ratio. Moretti and Wilson (2017) shows that $\beta_1$ can approximate the elasticity of the probability of moving with respect to the net-of-tax rate. Therefore, another interpretation of the point estimate is that the elasticity of mobility with respect to the net-of-average-PIT rate for pilots is around 3.189. 
+
+While the point estimates are positive, they are imprecisely estimated, and their magnitudes are relatively large compared to the analogous estimate reported in Moretti and Wilson (2017), which is around 1.8. This difference may reflect the higher mobility of pilots relative to the star scientists studied in their paper, or it could stem from measurement error and a lack of power due to the limitations of my current data. In future work, I plan to incorporate additional years of Airmen Certification data, supplied by a company called AviationDB, to fill in the missing years and improve the precision of the estimates. Table (\ref{table:migflow_1way}) in the appendix presents the results with standard errors clustered at the destination-origin state pair only. While the estimates are more precise, the difference between the two sets of results show that it is important to account for the correlations among the errors across pairs of states that share the same destination/origin state.
+
+\begin{table}[H]
+	\centering
+	\small
+	\begin{threeparttable}[b]
+		\begin{tabular}{lcccccc}
+			\toprule
+			Dependent Variable: & \multicolumn{6}{c}{migration log odds ratio}\\
+			Model:             & p90           & p95           & p96           & p97           & p98           &p99 \\  
+			\midrule
+			\emph{Variables}\\
+			log net-of-tax diff.    & 1.764         & 3.189         & 3.112         & 2.530         & 1.340         & 2.724$^{**}$\\   
+			& (1.949)       & (2.057)       & (1.974)       & (1.729)       & (1.487)       & (1.084)\\   
+			\midrule
+			\emph{Fixed-effects}\\
+			Year               & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Origin             & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Destination        & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Origin-Destination & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			\midrule
+			\emph{Fit statistics}\\
+			Observations       & 10,224        & 10,224        & 10,224        & 10,224        & 10,224        & 10,224\\  
+			R$^2$              & 0.84582       & 0.84590       & 0.84590       & 0.84589       & 0.84582       & 0.84606\\  
+			\midrule
+			\multicolumn{7}{l}{\emph{Clustered (Destination-Origin \& Origin-Year \& Destination-Year) SE}}\\
+			\multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+		\end{tabular}
+	\end{threeparttable}
+	\caption{Migration flow regression results}
+	\subcaption*{\scriptsize Notes: The table presents the results from estimating equation (\ref{migflow_spec}). The different columns shows the use of different tax measures simulated for a hypothetical pilot at different income percentiles. Standard errors, clustered three-way at the destination-origin state pair, origin state by year, and destination state by year level, are reported in parentheses.}
+	\label{table:migflow}
+\end{table}
+
+
+\subsection{Stock Model}
+
+In this section, I present results using an empirical strategy following Agrawal and Foremny (2019) that focuses on the stock of pilots residing in the destination versus the origin state, rather than migration flows. This alternative approach serves two purposes. First, the lack of consecutive-year data means that migration flows might be underestimated. Using information on the stock of pilots circumvents this issue. Second, this alternative approach explores the robustness of the results from the migration flow model.
+
+The regression specification is given as follows:
+\begin{equation} \label{stock_reg}
+	\ln \biggr ( \frac{N_{dt}}{N_{ot}} \biggr)= \beta \ln \biggr(\frac{1 - \tau_{dt}}{1 - \tau_{ot}} \biggr) + \gamma_d + \gamma_o + \gamma_t +  u_{dot}
+\end{equation}
+where $d$ indexes destination state, $o$ indexes origin state, and $t$ indexes year. $N_{dt}$ ($N_{ot}$) is the number of pilots residing in the destination (origin) state. $1 - \tau_{dt}$ ($1 - \tau_{ot}$) is the net-of-tax rate in the destination (origin) state. $ \gamma_d$, $\gamma_o$, and $\gamma_t$ are destination state, origin state, and year fixed effects, respectively. Standard errors are clustered three-way at the state pair, origin by year, and destination by year level. The coefficient of interest, $\beta$, approximates the stock elasticity of the population of pilots in the destination state with respect to its own net-of-tax rate (Agrawal and Foremny 2019).
+
+The origin versus destination state for this analysis is ``simulated''. I construct the data for the regression by computing for each year interval (9 in total) the stock of pilots residing in each state pair combination. This results in $51 \times 50 \times 9 = 22950$ observations.
+
+\textbf{Results.} Table (\ref{table:stock_results}) presents the preliminary results, exploring different measures of the tax variable. The results suggest that the estimated stock elasticity ranges from 1 to 2.37 depending on the tax measure. This is larger than the estimates in the literature, which range from 0.45 (Moretti and Wilson 2017) to 1 (Akcigit et al., 2016).
+
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}[b]
+		\small
+		\begin{tabular}{lcccccc}
+			\toprule
+			Dependent Variable: & \multicolumn{6}{c}{$\ln \biggr ( \frac{N_{d, t}}{N_{o, t}} \biggr)$}\\
+			Model:                                                                       & p90           & p95           & p96           & p97           & p98           & p99\\  
+			\midrule
+			\emph{Variables}\\
+			$\ln \biggr(\frac{1 - \tau_{d, t}}{1 - \tau_{o, t}} \biggr)$, ATR, p90       & 2.376$^{***}$ &   1.021             &  1.492$^{**}$              &   2.015$^{***}$             &   1.408$^{***}$            &   1.328$^{***}$\\   
+			& (0.6654)      &  (0.6845)             &  (0.6097)              &  (0.5533)             &    (0.4800)           &  (0.3751) \\   
+			\midrule
+			\emph{Fixed-effects}\\
+			Year                                                                         & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Origin                                                                       & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Destination                                                                  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			\midrule
+			\emph{Fit statistics}\\
+			Observations                                                                 & 22,950        & 22,950        & 22,950        & 22,950        & 22,950        & 22,950\\  
+			R$^2$                                                                        & 0.99708       & 0.99703       & 0.99704       & 0.99707       & 0.99705       & 0.99707\\  
+			Within R$^2$                                                                 & 0.01820       & 0.00270       & 0.00643       & 0.01576       & 0.01020       & 0.01494\\  
+			\midrule
+			\multicolumn{7}{l}{\emph{Clustered (Destination-Origin \& Origin-Year \& Destination-Year) standard-errors in parentheses}}\\
+			\multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+		\end{tabular}
+		\caption{Regression results from the stock model}
+		\subcaption*{\scriptsize The table presents the results from estimating equation (\ref{stock_reg}). The different columns shows the use of different tax measures simulated for a hypothetical pilot at different income percentiles. Standard errors, clustered three-way at the destination-origin state pair, origin state by year, and destination state by year level, are reported in parentheses. }
+		\label{table:stock_results}
+	\end{threeparttable}
+\end{table}
+
+
+
+
+\section{Conclusion}
+
+This paper seeks to provide new evidence on the effect of personal income taxes on labor geographic mobility by focusing on U.S. commercial airline pilots. Using public data on pilots' residential locations, I document that pilots disproportionately live in states with a zero personal income tax rate. I estimate the effect of state personal income taxes on pilots' location decisions using both a migration flow model and a stock model. Preliminary results suggest that state personal income taxes matter for where pilots choose to live, but the estimates are not precise.
+
+Looking ahead, there are four main future steps that I plan to take to extend and improve my analysis. First, I am in the process of acquiring historical Airmen Certification data for the missing years from a company called AviationDB\footnote{\url{https://www.aviationdb.com}}. The additional data will allow me to construct a consecutive-year panel from 2009 to 2022. This hopefully will reduce measurement errors regarding the timing of moves, increase the amount of destination-origin state pair variation in tax rates, and lead to more precise elasticity estimates. Moreover, I plan to use the consecutive-year data to conduct an event study analysis using major state tax rate changes to further investigate the relationship between tax changes and the timing of the moves.
+
+Second, I plan to improve the tax measures. My current measures of personal income, which only account for wage income and assume that all pilots are joint filers at the same income percentile, are very crude proxies. Using the IPUMS American Community Survery (ACS) data and the NBER TAXSIM program, I can construct more accurate tax measures for pilots. The occupation variable in the ACS has a value called ``airplane pilots and navigators'', which would allow me to identify pilots in the data. The ACS data contain a rich set of information such as various sources of income, marital status, number and age of dependents, and mortgage deductions, which I plan to incorporate as inputs to TAXSIM to better reflect the true personal income tax liabilities that pilots face. The simulated household-level tax rates can be aggregated to the ZIP code level to match the residential addresses of the pilots in the Airmen Certification data. Furthermore, beyond state personal income taxes, other types of state and local taxes might matter for pilots' location decisions as well. I plan to bring in sales tax and local property tax data to capture a more comprehensive picture of the tax considerations that might affect pilots' location decisions.
+ 
+ Third, I plan to exploit the 2017 Tax Cuts and Jobs Act (TCJA) as a quasi-experimental setting that changed the relative attractiveness of higher tax states. The TCJA capped the SALT deductions at \$10,000, which disproportionately affected high-income taxpayers living in higher tax states. I hope to use this plausibly exogenous policy change to arrive at more causal estimates.
+ 
+ Finally, I plan to conduct a robustness check using the sample of pilots in the Airmen Certification data with other certification levels such as sports, student, and recreational. The purpose of this robustness check is to examine the validity of my assumption that airline transport pilots, who mostly likely work for major commercial airline companies, are the group of pilots with the highest level of geographic mobility.
+
+
+
+\newpage
+\nocite{*}
+\printbibliography
+
+\newpage
+\appendix
+
+\section{Appendix}
+
+\subsection{Data}
+\noindent
+\textbf{Notes on data construction and sample restriction: }
+\begin{enumerate}
+	\item \textbf{I first restrict the sample to pilot certification holders.} I pool all years of the basic data files into one big basic dataset, and all years of the certificate data files into one big certificate dataset. I use the certificate dataset to identify the individuals who hold ``P" (pilot) type certificates. I drop the observations in the certificate dataset with other types of certificates, such as mechanic and flight instructor. Then I merge the certificate dataset with the basic dataset using the year and unique ID variables. This results in 5,037,304 observations. I checked that each unique ID only appears once in each year.
+	
+	\item \textbf{I then restrict the sample to pilot certification holders who have always lived in the U.S.} I dropped indivudals in my dataset who never lived in the U.S., or migrated in/out of the U.S. during the time period that the data is available. The proportion of unique pilots who never lived in the U.S. is 5.54\%. By each year, the proportion of pilots in the dataset who never lived in the US ranges from 3.78-7.22\%. The proportion of unique pilots who migrated in/out of the U.S. is 1.4\%. By each year, the proportion of pilots in the dataset who migrated in/out of the US ranges from 1-2\%. I also dropped the 1 observation with a missing value for the ``country" variable. This results in 4,778,887 observations.
+	
+	\item \textbf{Next, I restrict the sample to pilot certification holders who have always lived in 50 U.S states or D.C.} I dropped individuals who ever lived in PR, VI, AA, AE, GU, AP, AS, MP, FM, MH, PW. This results in 4,741,721 observations. 16,445 observtaions never lived in 50 states or DC, 20,721 observations lived in 50 states or DC in some years, but not in others. 4,741,721 observations always lived in 50 states or DC.  
+	
+	\item \textbf{Finally, I restrict my sample to airline transport pilot certification holders (ATR pilots)}. The final number of observations is 1,137,379. 
+	\end{enumerate}
+
+\subsection{Additional figures and tables}
+\newpage
+\begin{landscape}
+	\begin{figure} [H]
+		\centering
+		\includegraphics[scale=0.48]{../output_graphs/state_coverage_atr_pilots.png}
+		\caption{Percentage of all airline transport pilots covered in Airmen Certification data, by state and year}
+		\subcaption*{\scriptsize Notes: Data on the ``true" number of airline transport pilots by state and year is from the official FAA aggregate statistics on active U.S. civil airmen. This official aggregate data is available from 2016-2024. The numerator of the percentage is the number of airline transport pilots observed in the Airmen Certification data by state and year.}
+		\label{fig: state_data_coverage}
+	\end{figure}
+\end{landscape}
+
+\newpage
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.35]{../output_graphs/prop_atr_pilots_map_2024.png}
+	\caption{Share of airline transport pilots relative to state total working population in 2024}
+	\subcaption*{\scriptsize Notes: The number of airline transport pilots by state and year is computed using Airmen Certification data . State total working population is computed using the NBER CPS MORG data.}
+	\label{fig:prop_atr_pilots_map_2024}
+\end{figure}
+
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.4]{../output_graphs/prop_atr_pilots_allpilots_map_2024.png}
+	\caption{Share of airline transport pilots relative to total number of pilots in 2024}
+	\subcaption*{\scriptsize Notes: Both the number of airline transport pilots by state and year, and the total number of pilots in each year, are computed using Airmen Certification data.}
+	\label{fig:prop_atr_pilots_allpilots_map_2024}
+\end{figure}
+
+\newpage
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.48]{../output_graphs/atr_maps.png}
+	\caption{Simulated average personal income tax rate (\%) for a taxpayer at the 95th national income percentile, by state and year}
+	\subcaption*{\scriptsize Notes: Average PIT rate simulated using NBER TAXSIM. The only input to TAXSIM is the 95th percentile AGI income floor from the IRS SOI Individual Tax tables. The hypothetical taxpayer is assumed to be married and a joint filer. }
+	\label{fig:atr_maps}
+\end{figure}
+
+
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.35]{../output_graphs/binscatter_astr_pilots_noAK.png}
+	\caption{Relationship between the share of pilots relative to total state working population and the average state tax rate (Alaska excluded)}
+	\subcaption*{\scriptsize Notes: Binscatter plot with pooled state-year observations using available data from 2009 to 2022. Alaska, a state with a particularly high density of pilots for reasons other than state taxes, is excluded.}
+	\label{fig:motivating_binscatter_noAK}
+\end{figure}
+
+\begin{landscape}
+	\input{../output_tables/manual_total_outflow_observed_top20.tex}
+	{\scriptsize Notes: The top 25 states are selected in terms of having the largest population of pilots on average over 2009-2024. This table displays the total number of observed state-to-state moves of pilots from 2009-2024. For example, an individual who moved twice at different points in time would be counted twice in this table.}
+\end{landscape}
+
+\begin{table}[htbp]
+	\centering
+	\small
+	\begin{threeparttable}[b]
+		\begin{tabular}{lcccccc}
+			\toprule
+			Dependent Variable: & \multicolumn{6}{c}{migration log odds ratio}\\
+			Model:             & (1)           & (2)           & (3)           & (4)           & (5)           & (6)\\  
+			\midrule
+			\emph{Variables}\\
+			log net-of-tax diff.    & 1.764         & 3.189$^{**}$  & 3.112$^{**}$  & 2.530$^{**}$  & 1.340         & 2.724$^{***}$\\   
+			& (1.293)       & (1.403)       & (1.354)       & (1.173)       & (1.015)       & (0.7348)\\   
+			\midrule
+			\emph{Fixed-effects}\\
+			Year               & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Origin             & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Destination        & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			Origin-Destination & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$  & $\checkmark$\\   
+			\midrule
+			\emph{Fit statistics}\\
+			Observations       & 10,224        & 10,224        & 10,224        & 10,224        & 10,224        & 10,224\\  
+			R$^2$              & 0.84582       & 0.84590       & 0.84590       & 0.84589       & 0.84582       & 0.84606\\  
+			Within R$^2$       & 0.00030       & 0.00081       & 0.00083       & 0.00074       & 0.00028       & 0.00188\\  
+			\midrule
+			\multicolumn{7}{l}{\emph{Clustered (Destination-Origin) standard-errors in parentheses}}\\
+			\multicolumn{7}{l}{\emph{Signif. Codes: ***: 0.01, **: 0.05, *: 0.1}}\\
+		\end{tabular}
+	\end{threeparttable}
+	\caption{Migration flow regression results with standard errors clustered differently}
+	\subcaption*{\scriptsize Notes: The table presents alternative results from estimating equation (\ref{migflow_spec}). The different columns shows the use of different tax measures simulated for a hypothetical pilot at different income percentiles. Standard errors, clustered at the origin-destination state pair level, are reported in parentheses.}
+	\label{table:migflow_1way}
+\end{table}
+
+
+
+
+
+
+\end{document}

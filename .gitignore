@@ -1,5 +1,19 @@
-data/
-output/
+data/*
+!data/.gitkeep
+!data/intermediate/
+!data/intermediate/.gitkeep
+data/intermediate/*
+!data/intermediate/.gitkeep
+!data/derived/
+!data/derived/.gitkeep
+data/derived/*
+!data/derived/.gitkeep
+output/*
+!output/.gitkeep
+!output/figures/
+!output/figures/.gitkeep
+!output/tables/
+!output/tables/.gitkeep
 literature/
 
 *.aux
@@ -15,4 +29,9 @@ literature/
 *.bcf
 *.blg
 *.run.xml
+.DS_Store
+.Renviron
+.Rhistory
+.RData
+.Ruserdata
 .Rproj.user
