@@ -15,8 +15,7 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 - `code/00_setup/`: package loading, path resolution, and shared constants
 - `code/01_ingest/`: read external raw files from supported sources, standardize them, and build pooled intermediate datasets
 - `code/02_clean/`: define the analytic sample and create derived datasets
-- `code/03_analysis/`: build summary tables and analysis-ready outputs
-- `code/04_plots/`: generate figures from derived data, including migrated legacy sanity-check plots
+- `code/03_analysis/`: build summary tables, analysis-ready outputs, and figures generated from derived data
 - `code/99_validation/`: compare clean outputs against legacy outputs during migration
 - `code/utils/`: reusable helper functions used across stages
 
@@ -38,6 +37,6 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 
 ## Placement Rules
 - Do not add new production logic to `legacy_code/`
-- Do not mix plotting into cleaning scripts
+- Keep plotting in `code/03_analysis/`, not in cleaning scripts
 - Do not duplicate reusable helper logic across stage scripts
 - Keep scripts thin and pass information between stages through files, not workspace objects

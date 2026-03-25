@@ -16,7 +16,7 @@
 - `output/figures/` and `output/tables/` store presentation outputs only.
 
 ## Pipeline Conventions
-- Keep `ingest`, `clean`, `analysis`, and `plots` as separate stages.
+- Keep `ingest`, `clean`, and `analysis` as the active production stages; analysis also owns plotting outputs.
 - Scripts communicate through files, not objects left in the workspace.
 - Keep production scripts thin: load setup, call helper functions, write outputs.
 - Put shared constants and path resolution in `code/00_setup/00_packages_paths.R`.
@@ -34,5 +34,5 @@
 - Migrate one functional chunk at a time.
 - Validate each migrated chunk against legacy outputs before replacing downstream steps.
 - Keep naming descriptive. Avoid temporary names like `m1` in clean code.
-- Separate plotting from data construction.
+- Keep plotting work out of cleaning and validation scripts; place it with analysis outputs.
 - For now, legacy-compatible cleaning depends on an FAA-rich intermediate dataset rather than the minimal source-agnostic ingest panel.

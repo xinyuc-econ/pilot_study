@@ -71,4 +71,5 @@ excluded_territories <- c(
   "PR", "VI", "AA", "AE", "GU", "AP", "AS", "MP", "FM", "MH", "PW"
 )
 
+# This might need to be changed
 sampled_years <- c(2009, 2010, 2011, 2014, 2015, 2016, 2017, 2019, 2022, 2024, 2025)

@@ -8,8 +8,7 @@ This repository is the clean working copy for the project. Legacy scripts are ke
 - `code/00_setup/`: package loading, project paths, shared constants
 - `code/01_ingest/`: source-aware raw input ingestion and harmonization
 - `code/02_clean/`: sample restrictions and analysis-ready datasets
-- `code/03_analysis/`: summary tables and analysis datasets
-- `code/04_plots/`: figures generated from derived data, including legacy sanity-check plots
+- `code/03_analysis/`: summary tables, analysis datasets, and figures generated from derived data
 - `code/99_validation/`: temporary legacy-vs-clean validation scripts
 - `code/utils/`: reusable helper functions
 - `data/intermediate/`: generated pooled or harmonized datasets
@@ -32,6 +31,6 @@ If this local path changes again, update `code/00_setup/00_packages_paths.R` and
 - Keep legacy code in `legacy_code/`.
 - Migrate one functional chunk at a time.
 - Validate clean outputs against legacy behavior before moving to the next chunk.
-- Keep plotting separate from data construction.
+- Keep plotting logic with analysis outputs, not in cleaning scripts.
 - The ingest layer is designed to normalize both `raw/airmen_data` and `raw/aviationdb_data` to a common pilot-year schema.
 - FAA-specific cleaning currently uses a richer intermediate dataset built from `raw/airmen_data` so legacy summary statistics can be replicated before a later AviationDB redesign.
