@@ -21,6 +21,8 @@
 - Keep production scripts thin: load setup, call helper functions, write outputs.
 - Put shared constants and path resolution in `code/00_setup/00_packages_paths.R`.
 - Every production script should state its inputs and outputs at the top.
+- In `code/03_analysis/`, group generated outputs under numbered `Tables` and `Figures` comment headers using `#`, then label each table or figure block with numbered `##` subsections.
+- The zero-tax striped overlay used in analysis plots is validated on this machine with `ggplot2 4.0.2` and `ggpattern 1.3.1`; keep that pair aligned if the exact legacy look is required.
 - The clean ingest contract is a canonical pilot-year dataset with shared fields across FAA flat files and AviationDB yearly TSVs.
 
 ## External Data Policy

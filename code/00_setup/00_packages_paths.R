@@ -11,6 +11,10 @@ required_packages <- c(
   "janitor",
   "readxl",
   "ggplot2",
+  "usmap",
+  "stargazer",
+  "sf",
+  "ggpattern",
   "tibble",
   "testthat"
 )

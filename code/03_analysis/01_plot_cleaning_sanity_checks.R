@@ -20,7 +20,9 @@ main_us_pilots_atr <- readr::read_csv(
 ) |>
   dplyr::mutate(year = as.integer(.data$year))
 
-# Plot 1: Composition of Pilot Certification Holders ----
+# 1. Figures ----
+
+## 1.1 Composition of Pilot Certification Holders ----
 
 composition_plot <- main_us_pilots_any |>
   ggplot2::ggplot(ggplot2::aes(x = as.factor(.data$year), fill = .data$level_collapsed)) +
@@ -54,7 +56,7 @@ ggplot2::ggsave(
   height = 7
 )
 
-# Plot 2: Airline Transport Pilot Counts ----
+## 1.2 Airline Transport Pilot Counts ----
 
 atr_plot <- main_us_pilots_atr |>
   ggplot2::ggplot(ggplot2::aes(x = as.factor(.data$year))) +

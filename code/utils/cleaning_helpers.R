@@ -101,3 +101,62 @@ build_sum_stat_prop_pilots <- function(main_us_pilots_atr, tot_working_pop) {
     dplyr::left_join(tot_working_pop, by = c("year", "state")) |>
     dplyr::mutate(prop_atr_pilots = .data$n_atr_pilots / .data$tot_work_pop * 100)
 }
+
+# Analysis Builders ----
+
+build_state_prop_bins <- function(data) {
+  data |>
+    dplyr::mutate(
+      prop_bins = cut(.data$prop_atr_pilots, breaks = c(0.01, 0.05, 0.1, 0.2, 0.55))
+    )
+}
+
+build_state_prop_change <- function(data) {
+  data |>
+    dplyr::filter(.data$year %in% c(2009, 2024)) |>
+    dplyr::arrange(.data$state, .data$year) |>
+    dplyr::group_by(.data$state) |>
+    dplyr::mutate(
+      lag_prop_atr_pilots = dplyr::lag(.data$prop_atr_pilots),
+      d_prop_atr_pilots = log(.data$prop_atr_pilots) - log(.data$lag_prop_atr_pilots),
+      lag_n_atr_pilots = dplyr::lag(.data$n_atr_pilots),
+      d_n_atr_pilots = log(.data$n_atr_pilots) - log(.data$lag_n_atr_pilots)
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::filter(!is.na(.data$d_prop_atr_pilots)) |>
+    dplyr::mutate(
+      d_prop_bins = cut(.data$d_prop_atr_pilots, breaks = c(-0.35, -0.15, -0.01, 0.01, 0.15, 0.4))
+    )
+}
+
+build_state_total_share <- function(data) {
+  data |>
+    dplyr::group_by(.data$year) |>
+    dplyr::mutate(N_atr_pilots = sum(.data$n_atr_pilots)) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(
+      prop_atr_pilots_ofall = .data$n_atr_pilots / .data$N_atr_pilots * 100,
+      prop_bins = cut(.data$prop_atr_pilots_ofall, breaks = c(0, 1, 2, 3, 10, 13))
+    )
+}
+
+build_residual_state_map <- function(data, zero_states) {
+  data_2024 <- data |>
+    dplyr::filter(.data$year == 2024)
+
+  model <- stats::lm(prop_atr_pilots_ofall ~ tot_work_pop, data = data_2024)
+
+  residual_data <- data_2024 |>
+    dplyr::mutate(
+      pred = stats::predict(model, newdata = data_2024),
+      resid = .data$prop_atr_pilots_ofall - .data$pred,
+      resid_binned = cut(.data$resid, c(-4, -1, 0, 1, 4, 7))
+    )
+
+  states_map <- usmap::us_map(regions = "states") |>
+    sf::st_as_sf()
+
+  states_map |>
+    dplyr::left_join(residual_data, by = c("abbr" = "state")) |>
+    dplyr::mutate(zero_tax = .data$abbr %in% zero_states)
+}
