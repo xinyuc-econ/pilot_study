@@ -15,6 +15,8 @@ required_packages <- c(
   "stargazer",
   "sf",
   "ggpattern",
+  "purrr",
+  "usincometaxes",
   "tibble",
   "testthat"
 )
@@ -38,10 +40,14 @@ paths <- list(
   raw_data_root = raw_data_root,
   raw_airmen_data = file.path(raw_data_root, "raw", "airmen_data"),
   raw_aviationdb_data = file.path(raw_data_root, "raw", "aviationdb_data"),
+  raw_bls = file.path(raw_data_root, "raw", "bls"),
+  raw_soi = file.path(raw_data_root, "raw", "soi"),
   raw_tot_working_pop = file.path(raw_data_root, "raw", "tot_working_pop_weights"),
   xwalks = file.path(raw_data_root, "xwalks"),
   intermediate = project_path("data", "intermediate"),
   derived = project_path("data", "derived"),
+  taxsim = project_path("data", "derived", "taxsim"),
+  taxsim_output = project_path("data", "derived", "taxsim_output"),
   figures = project_path("output", "figures"),
   tables = project_path("output", "tables")
 )
@@ -52,6 +58,8 @@ paths <- list(
 required_directories <- c(
   paths$raw_airmen_data,
   paths$raw_aviationdb_data,
+  paths$raw_bls,
+  paths$raw_soi,
   paths$raw_tot_working_pop,
   paths$xwalks
 )
@@ -77,3 +85,4 @@ excluded_territories <- c(
 
 # This might need to be changed
 sampled_years <- c(2009, 2010, 2011, 2014, 2015, 2016, 2017, 2019, 2022, 2024, 2025)
+taxsim_years <- sampled_years[sampled_years >= 2009 & sampled_years <= 2022]

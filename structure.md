@@ -22,9 +22,10 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 ## Data and Output Locations
 - Raw input data is external and currently read from `/Users/xinyuc/Documents/pilots/data`
 - Supported ingest sources currently include `raw/airmen_data` and `raw/aviationdb_data`
+- Additional tax-input sources currently include `raw/bls` and `raw/soi`
 - Crosswalk files are external under `xwalks/`
 - `data/intermediate/`: generated pooled or harmonized datasets
-- `data/derived/`: generated analysis-ready datasets
+- `data/derived/`: generated analysis-ready datasets plus TAXSIM inputs and outputs
 - `output/figures/`: presentation figures
 - `output/tables/`: exported summary tables
 

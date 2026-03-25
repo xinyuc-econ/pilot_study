@@ -160,3 +160,252 @@ build_residual_state_map <- function(data, zero_states) {
     dplyr::left_join(residual_data, by = c("abbr" = "state")) |>
     dplyr::mutate(zero_tax = .data$abbr %in% zero_states)
 }
+
+# TAXSIM Input Builders ----
+
+load_irs_soi_crosswalk <- function(paths) {
+  readr::read_csv(
+    file.path(paths$xwalks, "irs_soi_fips_crosswalk.csv"),
+    show_col_types = FALSE
+  ) |>
+    janitor::clean_names()
+}
+
+load_soi_thresholds <- function(paths, years = taxsim_years) {
+  soi <- readxl::read_excel(file.path(paths$raw_soi, "soi_income_p.xlsx"))
+  cpi <- readr::read_csv(
+    file.path(paths$raw_soi, "CPI_U_2yr_Moving_Avg.csv"),
+    show_col_types = FALSE
+  ) |>
+    janitor::clean_names() |>
+    dplyr::select("year", "cpi_u")
+
+  cpi_2022 <- cpi |>
+    dplyr::filter(.data$year == 2022) |>
+    dplyr::pull(.data$cpi_u)
+
+  soi |>
+    dplyr::filter(.data$year %in% years) |>
+    dplyr::left_join(cpi, by = "year") |>
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::starts_with("real_"),
+        ~ .x * (cpi_2022 / .data$cpi_u),
+        .names = "nom_{stringr::str_remove(.col, '^real_')}"
+      )
+    ) |>
+    dplyr::select("year", dplyr::starts_with("nom_"))
+}
+
+build_soi_taxsim_inputs <- function(soi_thresholds, irs_soi_crosswalk) {
+  soi_thresholds |>
+    tidyr::crossing(state = irs_soi_crosswalk$irs_soi_code) |>
+    dplyr::mutate(mstat = 2L) |>
+    tidyr::pivot_longer(
+      cols = dplyr::starts_with("nom_"),
+      names_to = "percentile",
+      values_to = "pwages"
+    ) |>
+    dplyr::mutate(
+      percentile = stringr::str_remove(.data$percentile, "^nom_"),
+      method = "soi"
+    ) |>
+    dplyr::select("year", "state", "mstat", "percentile", "pwages", "method")
+}
+
+discover_bls_wage_files <- function(paths, years = taxsim_years) {
+  files <- list.files(
+    paths$raw_bls,
+    pattern = "^national_M[0-9]{4}_dl\\.xlsx?$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+  discovered <- tibble::tibble(path = files) |>
+    dplyr::mutate(
+      year = as.integer(stringr::str_extract(basename(.data$path), "[0-9]{4}"))
+    ) |>
+    dplyr::filter(.data$year %in% years) |>
+    dplyr::arrange(.data$year)
+
+  if (nrow(discovered) == 0) {
+    stop("No raw BLS wage files were found for the requested TAXSIM years.", call. = FALSE)
+  }
+
+  discovered
+}
+
+load_bls_wages <- function(paths, years = taxsim_years) {
+  bls_files <- discover_bls_wage_files(paths, years = years)
+
+  purrr::map_dfr(bls_files$path, function(path) {
+    readxl::read_excel(path) |>
+      janitor::clean_names() |>
+      dplyr::select(
+        dplyr::any_of(c(
+          "occ_code", "occ_title", "a_mean", "a_pct10", "a_pct25",
+          "a_median", "a_pct75", "a_pct90"
+        ))
+      ) |>
+      dplyr::filter(.data$occ_code %in% c("53-2010", "53-2011", "53-2012")) |>
+      dplyr::mutate(year = as.integer(stringr::str_extract(basename(path), "[0-9]{4}"))) |>
+      dplyr::relocate("year")
+  }) |>
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::starts_with("a_"),
+        ~ as.numeric(dplyr::na_if(as.character(.x), "#"))
+      )
+    )
+}
+
+build_bls_taxsim_inputs <- function(bls_wages, irs_soi_crosswalk) {
+  bls_wages |>
+    dplyr::filter(.data$occ_code %in% c("53-2011", "53-2012")) |>
+    tidyr::crossing(state = irs_soi_crosswalk$irs_soi_code) |>
+    dplyr::mutate(mstat = 1L) |>
+    tidyr::pivot_longer(
+      cols = dplyr::all_of(c("a_mean", "a_median")),
+      names_to = "percentile",
+      values_to = "pwages"
+    ) |>
+    dplyr::mutate(
+      percentile = stringr::str_remove(.data$percentile, "^a_"),
+      method = "bls"
+    ) |>
+    dplyr::select(
+      "year",
+      "state",
+      "mstat",
+      "occ_code",
+      "percentile",
+      "pwages",
+      "method"
+    )
+}
+
+taxsim_input_filename <- function(method, percentile = NULL, occ_code = NULL) {
+  if (method == "soi") {
+    return(sprintf("taxsim_input_soi_%s.csv", percentile))
+  }
+
+  if (method == "bls") {
+    return(sprintf("taxsim_input_bls_%s_%s.csv", occ_code, percentile))
+  }
+
+  stop("Unsupported TAXSIM input method.", call. = FALSE)
+}
+
+taxsim_output_filename <- function(method, percentile = NULL, occ_code = NULL) {
+  if (method == "soi") {
+    return(sprintf("taxsim_output_soi_%s.csv", percentile))
+  }
+
+  if (method == "bls") {
+    return(sprintf("taxsim_output_bls_%s_%s.csv", occ_code, percentile))
+  }
+
+  stop("Unsupported TAXSIM output method.", call. = FALSE)
+}
+
+write_taxsim_case_outputs <- function(data, output_dir) {
+  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+  if ("occ_code" %in% names(data)) {
+    split_keys <- dplyr::distinct(data, .data$method, .data$occ_code, .data$percentile)
+
+    purrr::pwalk(
+      split_keys,
+      function(method, occ_code, percentile) {
+        output_path <- file.path(output_dir, taxsim_input_filename(
+          method = method,
+          percentile = percentile,
+          occ_code = occ_code
+        ))
+
+        data |>
+          dplyr::filter(
+            .data$method == method,
+            .data$occ_code == occ_code,
+            .data$percentile == percentile
+          ) |>
+          dplyr::select("year", "state", "mstat", "pwages") |>
+          readr::write_csv(output_path)
+      }
+    )
+
+    return(invisible(NULL))
+  }
+
+  split_keys <- dplyr::distinct(data, .data$method, .data$percentile)
+
+  purrr::pwalk(
+    split_keys,
+    function(method, percentile) {
+      output_path <- file.path(output_dir, taxsim_input_filename(
+        method = method,
+        percentile = percentile
+      ))
+
+      data |>
+        dplyr::filter(.data$method == method, .data$percentile == percentile) |>
+        dplyr::select("year", "state", "mstat", "pwages") |>
+        readr::write_csv(output_path)
+    }
+  )
+}
+
+discover_taxsim_case_files <- function(paths) {
+  files <- list.files(
+    paths$taxsim,
+    pattern = "^taxsim_input_.*\\.csv$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+  tibble::tibble(path = files) |>
+    dplyr::mutate(
+      file_stem = tools::file_path_sans_ext(basename(.data$path)),
+      method = dplyr::if_else(
+        stringr::str_detect(.data$file_stem, "^taxsim_input_soi_"),
+        "soi",
+        "bls"
+      ),
+      percentile = dplyr::if_else(
+        .data$method == "soi",
+        stringr::str_remove(.data$file_stem, "^taxsim_input_soi_"),
+        stringr::str_match(.data$file_stem, "^taxsim_input_bls_[0-9-]+_(.+)$")[, 2]
+      ),
+      occ_code = dplyr::if_else(
+        .data$method == "bls",
+        stringr::str_match(.data$file_stem, "^taxsim_input_bls_([0-9-]+)_.+$")[, 2],
+        NA_character_
+      )
+    ) |>
+    dplyr::select(-"file_stem") |>
+    dplyr::arrange(.data$method, .data$occ_code, .data$percentile)
+}
+
+run_taxsim_case_file <- function(path, output_dir, return_all_information = TRUE) {
+  input_data <- readr::read_csv(path, show_col_types = FALSE) |>
+    dplyr::mutate(taxsimid = dplyr::row_number()) |>
+    dplyr::relocate("taxsimid")
+
+  tax_results <- usincometaxes::taxsim_calculate_taxes(
+    .data = input_data,
+    marginal_tax_rates = "Wages",
+    return_all_information = return_all_information
+  )
+
+  output_data <- input_data |>
+    dplyr::left_join(tax_results, by = "taxsimid")
+
+  base_name <- basename(path)
+  output_name <- sub("^taxsim_input_", "taxsim_output_", base_name)
+  output_path <- file.path(output_dir, output_name)
+
+  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+  readr::write_csv(output_data, output_path)
+
+  output_path
+}

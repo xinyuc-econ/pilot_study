@@ -23,6 +23,7 @@
 - Every production script should state its inputs and outputs at the top.
 - In `code/03_analysis/`, group generated outputs under numbered `Tables` and `Figures` comment headers using `#`, then label each table or figure block with numbered `##` subsections.
 - The zero-tax striped overlay used in analysis plots is validated on this machine with `ggplot2 4.0.2` and `ggpattern 1.3.1`; keep that pair aligned if the exact legacy look is required.
+- TAXSIM robustness work belongs in `code/02_clean/`; write split input cases under `data/derived/taxsim/` and runner outputs under `data/derived/taxsim_output/`.
 - The clean ingest contract is a canonical pilot-year dataset with shared fields across FAA flat files and AviationDB yearly TSVs.
 
 ## External Data Policy

@@ -12,7 +12,7 @@ This repository is the clean working copy for the project. Legacy scripts are ke
 - `code/99_validation/`: temporary legacy-vs-clean validation scripts
 - `code/utils/`: reusable helper functions
 - `data/intermediate/`: generated pooled or harmonized datasets
-- `data/derived/`: generated analysis-ready datasets
+- `data/derived/`: generated analysis-ready datasets, TAXSIM inputs, and TAXSIM outputs
 - `output/figures/` and `output/tables/`: exported outputs
 - `tests/testthat/`: durable automated tests
 
@@ -22,6 +22,8 @@ Raw data lives outside this repository and is currently referenced directly in t
 Expected subfolders under that external directory:
 - `raw/airmen_data/`
 - `raw/aviationdb_data/`
+- `raw/bls/`
+- `raw/soi/`
 - `raw/tot_working_pop_weights/`
 - `xwalks/`
 
