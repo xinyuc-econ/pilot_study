@@ -5,10 +5,10 @@
 load_state_fips_crosswalk <- function(paths) {
   readxl::read_excel(file.path(paths$xwalks, "StateFIPSicsprAB.xls")) |>
     janitor::clean_names() |>
-    dplyr::select(.data$fips, .data$name, .data$ab) |>
+    dplyr::select("fips", "name", "ab") |>
     dplyr::rename(
-      statefull = .data$name,
-      state = .data$ab
+      statefull = "name",
+      state = "ab"
     )
 }
 
@@ -315,22 +315,26 @@ write_taxsim_case_outputs <- function(data, output_dir) {
     split_keys <- dplyr::distinct(data, .data$method, .data$occ_code, .data$percentile)
 
     purrr::pwalk(
-      split_keys,
-      function(method, occ_code, percentile) {
-        output_path <- file.path(output_dir, taxsim_input_filename(
-          method = method,
-          percentile = percentile,
-          occ_code = occ_code
-        ))
+    split_keys,
+    function(method, occ_code, percentile) {
+      case_method <- method
+      case_occ_code <- occ_code
+      case_percentile <- percentile
 
-        data |>
-          dplyr::filter(
-            .data$method == method,
-            .data$occ_code == occ_code,
-            .data$percentile == percentile
-          ) |>
-          dplyr::select("year", "state", "mstat", "pwages") |>
-          readr::write_csv(output_path)
+      output_path <- file.path(output_dir, taxsim_input_filename(
+        method = case_method,
+        percentile = case_percentile,
+        occ_code = case_occ_code
+      ))
+
+      data |>
+        dplyr::filter(
+          .data$method == case_method,
+          .data$occ_code == case_occ_code,
+          .data$percentile == case_percentile
+        ) |>
+        dplyr::select("year", "state", "mstat", "pwages") |>
+        readr::write_csv(output_path)
       }
     )
 
@@ -342,13 +346,16 @@ write_taxsim_case_outputs <- function(data, output_dir) {
   purrr::pwalk(
     split_keys,
     function(method, percentile) {
+      case_method <- method
+      case_percentile <- percentile
+
       output_path <- file.path(output_dir, taxsim_input_filename(
-        method = method,
-        percentile = percentile
+        method = case_method,
+        percentile = case_percentile
       ))
 
       data |>
-        dplyr::filter(.data$method == method, .data$percentile == percentile) |>
+        dplyr::filter(.data$method == case_method, .data$percentile == case_percentile) |>
         dplyr::select("year", "state", "mstat", "pwages") |>
         readr::write_csv(output_path)
     }
@@ -408,4 +415,114 @@ run_taxsim_case_file <- function(path, output_dir, return_all_information = TRUE
   readr::write_csv(output_data, output_path)
 
   output_path
+}
+
+# PIT Measure Builders ----
+
+discover_taxsim_output_files <- function(paths, requested_method = NULL) {
+  files <- list.files(
+    paths$taxsim_output,
+    pattern = "^taxsim_output_.*\\.csv$",
+    recursive = FALSE,
+    full.names = TRUE
+  )
+
+  discovered <- tibble::tibble(path = files) |>
+    dplyr::mutate(
+      file_stem = tools::file_path_sans_ext(basename(.data$path)),
+      method = dplyr::if_else(
+        stringr::str_detect(.data$file_stem, "^taxsim_output_soi_"),
+        "soi",
+        "bls"
+      ),
+      percentile = dplyr::if_else(
+        .data$method == "soi",
+        stringr::str_remove(.data$file_stem, "^taxsim_output_soi_"),
+        stringr::str_match(.data$file_stem, "^taxsim_output_bls_[0-9-]+_(.+)$")[, 2]
+      ),
+      occ_code = dplyr::if_else(
+        .data$method == "bls",
+        stringr::str_match(.data$file_stem, "^taxsim_output_bls_([0-9-]+)_.+$")[, 2],
+        NA_character_
+      )
+    ) |>
+    dplyr::select(-"file_stem") |>
+    dplyr::arrange(.data$method, .data$occ_code, .data$percentile)
+
+  if (!is.null(requested_method)) {
+    discovered <- discovered |>
+      dplyr::filter(.data$method == requested_method)
+  }
+
+  if (nrow(discovered) == 0) {
+    stop("No TAXSIM output files were found under data/derived/taxsim_output.", call. = FALSE)
+  }
+
+  discovered
+}
+
+build_pit_measures <- function(data) {
+  data |>
+    dplyr::mutate(
+      astr = .data$siitax / .data$v10_federal_agi,
+      atr = (.data$siitax + .data$fiitax) / .data$v10_federal_agi
+    )
+}
+
+load_soi_pit_measures <- function(paths) {
+  output_files <- discover_taxsim_output_files(paths, requested_method = "soi")
+  xwalk <- load_irs_soi_crosswalk(paths)
+
+  purrr::map2_dfr(
+    output_files$path,
+    output_files$percentile,
+    function(path, percentile) {
+      readr::read_csv(path, show_col_types = FALSE) |>
+        dplyr::select("year", "state", "fiitax", "siitax", "v10_federal_agi", "srate") |>
+        build_pit_measures() |>
+        dplyr::mutate(percentile = percentile)
+    }
+  ) |>
+    dplyr::left_join(xwalk, by = c("state" = "irs_soi_code")) |>
+    dplyr::rename(fips = "fips_code") |>
+    dplyr::select(-"state", -"state_name")
+}
+
+build_soi_pit_wide <- function(data) {
+  data |>
+    dplyr::select("year", "fips", "percentile", "srate", "astr", "atr") |>
+    tidyr::pivot_wider(
+      names_from = "percentile",
+      values_from = c("srate", "astr", "atr")
+    )
+}
+
+pilot_type_from_occ_code <- function(occ_code) {
+  dplyr::case_when(
+    occ_code == "53-2011" ~ "airline",
+    occ_code == "53-2012" ~ "commercial",
+    TRUE ~ NA_character_
+  )
+}
+
+load_bls_pit_measures <- function(paths) {
+  output_files <- discover_taxsim_output_files(paths, requested_method = "bls")
+  xwalk <- load_irs_soi_crosswalk(paths)
+
+  purrr::pmap_dfr(
+    output_files,
+    function(path, method, percentile, occ_code) {
+      readr::read_csv(path, show_col_types = FALSE) |>
+        dplyr::select("year", "state", "fiitax", "siitax", "v10_federal_agi", "srate") |>
+        build_pit_measures() |>
+        dplyr::mutate(
+          percentile = percentile,
+          occ_code = occ_code,
+          pilot_type = pilot_type_from_occ_code(occ_code)
+        )
+    }
+  ) |>
+    dplyr::left_join(xwalk, by = c("state" = "irs_soi_code")) |>
+    dplyr::rename(fips = "fips_code") |>
+    dplyr::select(-"state", -"state_name", -"occ_code")
 }

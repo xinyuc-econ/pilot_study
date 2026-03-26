@@ -14,8 +14,8 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 ## Pipeline Stages
 - `code/00_setup/`: package loading, path resolution, and shared constants
 - `code/01_ingest/`: read external raw files from supported sources, standardize them, and build pooled intermediate datasets
-- `code/02_clean/`: define the analytic sample and create derived datasets
-- `code/03_analysis/`: build summary tables, analysis-ready outputs, and figures generated from derived data
+- `code/02_clean/`: define the analytic sample, run TAXSIM-related data preparation, and create derived datasets
+- `code/03_analysis/`: build summary tables, PIT/pilot analysis outputs, and figures generated from derived data
 - `code/99_validation/`: compare clean outputs against legacy outputs during migration
 - `code/utils/`: reusable helper functions used across stages
 
@@ -25,7 +25,7 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 - Additional tax-input sources currently include `raw/bls` and `raw/soi`
 - Crosswalk files are external under `xwalks/`
 - `data/intermediate/`: generated pooled or harmonized datasets
-- `data/derived/`: generated analysis-ready datasets plus TAXSIM inputs and outputs
+- `data/derived/`: generated analysis-ready datasets plus PIT measure datasets, TAXSIM inputs, and TAXSIM outputs
 - `output/figures/`: presentation figures
 - `output/tables/`: exported summary tables
 
@@ -39,5 +39,6 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 ## Placement Rules
 - Do not add new production logic to `legacy_code/`
 - Keep plotting in `code/03_analysis/`, not in cleaning scripts
+- Keep post-TAXSIM PIT measure construction in `code/02_clean/`, not in the TAXSIM runner
 - Do not duplicate reusable helper logic across stage scripts
 - Keep scripts thin and pass information between stages through files, not workspace objects
