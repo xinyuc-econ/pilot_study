@@ -7,18 +7,18 @@
 source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
-prop_pilots <- readr::read_csv(
+prop_pilots <- read_csv(
   file.path(paths$derived, "sum_stat_prop_atr_pilots.csv"),
   show_col_types = FALSE
 ) |>
-  dplyr::filter(.data$year >= 2009, .data$year <= 2022)
+  filter(.data$year >= 2009, .data$year <= 2022)
 
-pit_soi_wide <- readr::read_csv(
+pit_soi_wide <- read_csv(
   file.path(paths$derived, "all_years_pit_soi_wide.csv"),
   show_col_types = FALSE
 )
 
-pit_bls <- readr::read_csv(
+pit_bls <- read_csv(
   file.path(paths$derived, "all_years_pit_bls.csv"),
   show_col_types = FALSE
 )
@@ -41,12 +41,12 @@ pilot_tax_analysis_bls <- build_bls_pilot_tax_analysis(
 
 # Outputs ----
 
-readr::write_csv(
+write_csv(
   pilot_tax_analysis_soi,
   file.path(paths$derived, "pilot_tax_analysis_soi.csv")
 )
 
-readr::write_csv(
+write_csv(
   pilot_tax_analysis_bls,
   file.path(paths$derived, "pilot_tax_analysis_bls.csv")
 )

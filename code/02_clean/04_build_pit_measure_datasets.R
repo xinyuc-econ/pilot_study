@@ -15,9 +15,9 @@ soi_pit_wide <- build_soi_pit_wide(soi_pit_measures)
 
 # Outputs ----
 
-readr::write_csv(soi_pit_measures, file.path(paths$derived, "all_years_pit_soi.csv"))
-readr::write_csv(soi_pit_wide, file.path(paths$derived, "all_years_pit_soi_wide.csv"))
-readr::write_csv(bls_pit_measures, file.path(paths$derived, "all_years_pit_bls.csv"))
+write_csv(soi_pit_measures, file.path(paths$derived, "all_years_pit_soi.csv"))
+write_csv(soi_pit_wide, file.path(paths$derived, "all_years_pit_soi_wide.csv"))
+write_csv(bls_pit_measures, file.path(paths$derived, "all_years_pit_bls.csv"))
 
 # Reporting ----
 

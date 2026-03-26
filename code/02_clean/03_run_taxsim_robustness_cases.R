@@ -21,7 +21,7 @@ if (nrow(taxsim_case_files) == 0) {
 
 # 1. TAXSIM Outputs ----
 
-output_paths <- purrr::map_chr(
+output_paths <- map_chr(
   taxsim_case_files$path,
   run_taxsim_case_file,
   output_dir = paths$taxsim_output,

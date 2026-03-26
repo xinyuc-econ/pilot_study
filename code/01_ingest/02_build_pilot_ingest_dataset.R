@@ -23,7 +23,7 @@ pilot_ingest <- build_pilot_ingest_dataset(
   years = year_subset
 )
 
-readr::write_csv(pilot_ingest, output_path)
+write_csv(pilot_ingest, output_path)
 
 # Reporting ----
 

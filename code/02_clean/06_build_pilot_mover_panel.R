@@ -9,12 +9,12 @@ source("code/utils/cleaning_helpers.R")
 
 # Inputs ----
 
-main_us_pilots_atr <- readr::read_csv(
+main_us_pilots_atr <- read_csv(
   file.path(paths$derived, "main_us_pilots_atr.csv"),
   show_col_types = FALSE,
-  col_types = readr::cols(.default = readr::col_character())
+  col_types = cols(.default = col_character())
 ) |>
-  dplyr::mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(.data$year))
 
 # Derived Dataset ----
 
@@ -26,7 +26,7 @@ mover_panel <- main_us_pilots_atr |>
 # Outputs ----
 
 output_path <- file.path(paths$derived, "main_us_pilots_atr_mover_panel.csv")
-readr::write_csv(mover_panel, output_path)
+write_csv(mover_panel, output_path)
 
 # Reporting ----
 

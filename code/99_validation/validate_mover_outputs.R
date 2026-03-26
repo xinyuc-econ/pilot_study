@@ -7,29 +7,29 @@
 source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
-main_us_pilots_atr <- readr::read_csv(
+main_us_pilots_atr <- read_csv(
   file.path(paths$derived, "main_us_pilots_atr.csv"),
   show_col_types = FALSE,
-  col_types = readr::cols(.default = readr::col_character())
+  col_types = cols(.default = col_character())
 ) |>
-  dplyr::mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(.data$year))
 
-migrated_mover_panel <- readr::read_csv(
+migrated_mover_panel <- read_csv(
   file.path(paths$derived, "main_us_pilots_atr_mover_panel.csv"),
   show_col_types = FALSE
 ) |>
-  dplyr::mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(.data$year))
 
-sum_stat_prop_atr_pilots <- readr::read_csv(
+sum_stat_prop_atr_pilots <- read_csv(
   file.path(paths$derived, "sum_stat_prop_atr_pilots.csv"),
   show_col_types = FALSE
 ) |>
-  dplyr::mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(.data$year))
 
 # Legacy-Equivalent Reconstruction ----
 
 legacy_subset <- main_us_pilots_atr |>
-  dplyr::select(
+  select(
     "year",
     "fips",
     "statefull",
@@ -44,34 +44,34 @@ legacy_subset <- main_us_pilots_atr |>
   )
 
 legacy_mover_panel <- legacy_subset |>
-  dplyr::arrange(.data$year) |>
-  dplyr::arrange(.data$unique_id) |>
-  dplyr::group_by(.data$unique_id) |>
-  dplyr::rename(dest_state = "state") |>
-  dplyr::mutate(
-    origin_state = dplyr::lag(.data$dest_state),
+  arrange(.data$year) |>
+  arrange(.data$unique_id) |>
+  group_by(.data$unique_id) |>
+  rename(dest_state = "state") |>
+  mutate(
+    origin_state = lag(.data$dest_state),
     moved = ifelse(.data$dest_state != .data$origin_state, 1L, 0L)
   ) |>
-  dplyr::relocate("origin_state", "moved", .after = "dest_state") |>
-  dplyr::ungroup() |>
-  dplyr::group_by(.data$unique_id) |>
-  dplyr::mutate(num_moves = sum(.data$moved, na.rm = TRUE)) |>
-  dplyr::relocate("num_moves", .after = "moved") |>
-  dplyr::ungroup()
+  relocate("origin_state", "moved", .after = "dest_state") |>
+  ungroup() |>
+  group_by(.data$unique_id) |>
+  mutate(num_moves = sum(.data$moved, na.rm = TRUE)) |>
+  relocate("num_moves", .after = "moved") |>
+  ungroup()
 
 legacy_flow_panel <- legacy_mover_panel |>
-  dplyr::group_by(.data$unique_id) |>
-  dplyr::mutate(
-    lag_year = dplyr::lag(.data$year),
+  group_by(.data$unique_id) |>
+  mutate(
+    lag_year = lag(.data$year),
     time_period_yrs = .data$year - .data$lag_year
   ) |>
-  dplyr::relocate("lag_year", "time_period_yrs", .after = "year") |>
-  dplyr::filter(!is.na(.data$lag_year)) |>
-  dplyr::ungroup()
+  relocate("lag_year", "time_period_yrs", .after = "year") |>
+  filter(!is.na(.data$lag_year)) |>
+  ungroup()
 
 migrated_flow_panel <- migrated_mover_panel |>
   add_flow_time_fields() |>
-  dplyr::filter(!is.na(.data$lag_year))
+  filter(!is.na(.data$lag_year))
 
 # Comparisons ----
 
@@ -96,11 +96,11 @@ if (!identical(sum(migrated_all_states_flow), sum(legacy_all_states_flow))) {
 top10_states <- select_top_states_by_average_atr_count(sum_stat_prop_atr_pilots, n_states = 10L)
 
 migrated_top10_flow <- migrated_flow_panel |>
-  dplyr::filter(.data$origin_state %in% top10_states, .data$dest_state %in% top10_states) |>
+  filter(.data$origin_state %in% top10_states, .data$dest_state %in% top10_states) |>
   build_migration_flow_table()
 
 legacy_top10_flow <- legacy_flow_panel |>
-  dplyr::filter(.data$origin_state %in% top10_states, .data$dest_state %in% top10_states) |>
+  filter(.data$origin_state %in% top10_states, .data$dest_state %in% top10_states) |>
   build_migration_flow_table()
 
 if (!identical(dim(migrated_top10_flow), dim(legacy_top10_flow))) {

@@ -2,6 +2,14 @@
 # Inputs: local raw data root at /Users/xinyuc/Documents/pilots/data
 # Outputs: none; scripts source this file to access `paths` and shared constants.
 
+# Runtime Environment ----
+
+Sys.setenv(
+  OMP_NUM_THREADS = "1",
+  OPENBLAS_NUM_THREADS = "1",
+  MKL_NUM_THREADS = "1"
+)
+
 # Package Assumptions ----
 
 required_packages <- c(
@@ -20,7 +28,31 @@ required_packages <- c(
   "usincometaxes",
   "tibble",
   "testthat",
-  "xtable"
+  "xtable",
+  "fixest"
+)
+
+missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
+
+if (length(missing_packages) > 0) {
+  stop(
+    paste(
+      "The following required R packages are not installed:",
+      paste(missing_packages, collapse = ", ")
+    ),
+    call. = FALSE
+  )
+}
+
+invisible(
+  lapply(
+    required_packages,
+    function(pkg) {
+      suppressPackageStartupMessages(
+        library(pkg, character.only = TRUE)
+      )
+    }
+  )
 )
 
 # Project Paths ----

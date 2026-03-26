@@ -21,7 +21,7 @@ faa_pilot_rich_panel <- build_faa_rich_ingest_dataset(
   years = year_subset
 )
 
-readr::write_csv(faa_pilot_rich_panel, output_path)
+write_csv(faa_pilot_rich_panel, output_path)
 
 # Reporting ----
 

@@ -15,14 +15,14 @@ input_path <- Sys.getenv(
 
 # Input Loading ----
 
-pilot_data <- readr::read_csv(
+pilot_data <- read_csv(
   input_path,
   na = c("", "NA"),
   show_col_types = FALSE,
-  col_types = readr::cols(.default = readr::col_character())
+  col_types = cols(.default = col_character())
 ) |>
-  dplyr::mutate(year = as.integer(.data$year)) |>
-  dplyr::filter(.data$year != 2025)
+  mutate(year = as.integer(.data$year)) |>
+  filter(.data$year != 2025)
 
 # Sample Restrictions and Enrichment ----
 
@@ -42,9 +42,9 @@ sum_stat_prop_pilots <- build_sum_stat_prop_pilots(main_us_pilots_atr, tot_worki
 
 # Outputs ----
 
-readr::write_csv(main_us_pilots_any, file.path(paths$derived, "main_us_pilots_any.csv"))
-readr::write_csv(main_us_pilots_atr, file.path(paths$derived, "main_us_pilots_atr.csv"))
-readr::write_csv(
+write_csv(main_us_pilots_any, file.path(paths$derived, "main_us_pilots_any.csv"))
+write_csv(main_us_pilots_atr, file.path(paths$derived, "main_us_pilots_atr.csv"))
+write_csv(
   sum_stat_prop_pilots,
   file.path(paths$derived, "sum_stat_prop_atr_pilots.csv")
 )

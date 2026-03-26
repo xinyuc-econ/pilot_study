@@ -7,12 +7,12 @@
 source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
-pilot_tax_soi <- readr::read_csv(
+pilot_tax_soi <- read_csv(
   file.path(paths$derived, "pilot_tax_analysis_soi.csv"),
   show_col_types = FALSE
 )
 
-pilot_tax_bls <- readr::read_csv(
+pilot_tax_bls <- read_csv(
   file.path(paths$derived, "pilot_tax_analysis_bls.csv"),
   show_col_types = FALSE
 )
@@ -33,22 +33,22 @@ apply_legacy_binscatter_style <- function(
   caption = NULL
 ) {
   styled_plot <- plot +
-    ggplot2::labs(
+    labs(
       x = x_label,
       y = "Share of pilots in tot. working pop. (%)",
       caption = caption
     ) +
-    ggplot2::theme(
-      axis.title = ggplot2::element_text(size = 24),
-      axis.text = ggplot2::element_text(size = 20),
-      strip.text.x = ggplot2::element_text(size = 28),
-      plot.caption = ggplot2::element_text(size = 14)
+    theme(
+      axis.title = element_text(size = 24),
+      axis.text = element_text(size = 20),
+      strip.text.x = element_text(size = 28),
+      plot.caption = element_text(size = 14)
     )
 
   if (method == "bls") {
     if (geography_variant == "no_AK_HI") {
       styled_plot <- styled_plot +
-        ggplot2::scale_y_continuous(
+        scale_y_continuous(
           limits = c(0.04, 0.12),
           breaks = seq(0.04, 0.12, 0.02)
         )
@@ -58,7 +58,7 @@ apply_legacy_binscatter_style <- function(
       y_breaks <- y_breaks[y_breaks >= y_limits[1] & y_breaks <= y_limits[2]]
 
       styled_plot <- styled_plot +
-        ggplot2::scale_y_continuous(
+        scale_y_continuous(
           limits = y_limits,
           breaks = y_breaks
         )
@@ -66,7 +66,7 @@ apply_legacy_binscatter_style <- function(
 
     if (tax_measure == "atr") {
       styled_plot <- styled_plot +
-        ggplot2::scale_x_continuous(
+        scale_x_continuous(
           limits = c(19, 29),
           breaks = seq(19, 29, 2)
         )
@@ -87,7 +87,7 @@ build_binscatter_plot <- function(
   caption = NULL
 ) {
   bins_output <- suppressWarnings(
-    binsreg::binsreg(
+    binsreg(
       y = data$prop_atr_pilots,
       x = data[[x_var]],
       data = as.data.frame(data),
@@ -119,7 +119,7 @@ save_case_binscatters <- function(
 ) {
   filtered_data <- if (length(excluded_states) > 0) {
     data |>
-      dplyr::filter(!.data$state %in% excluded_states)
+      filter(!.data$state %in% excluded_states)
   } else {
     data
   }
@@ -167,7 +167,7 @@ save_case_binscatters <- function(
   )
 
   suppressWarnings(
-    ggplot2::ggsave(
+    ggsave(
       file.path(
         paths$figures,
         build_binscatter_output_filename(
@@ -185,7 +185,7 @@ save_case_binscatters <- function(
   )
 
   suppressWarnings(
-    ggplot2::ggsave(
+    ggsave(
       file.path(
         paths$figures,
         build_binscatter_output_filename(
@@ -203,14 +203,14 @@ save_case_binscatters <- function(
   )
 }
 
-soi_cases <- tibble::tibble(percentile = c("p90", "p95", "p99"))
+soi_cases <- tibble(percentile = c("p90", "p95", "p99"))
 
 bls_cases <- pilot_tax_bls |>
-  dplyr::filter(.data$pilot_type == "airline", .data$percentile %in% c("mean", "median")) |>
-  dplyr::distinct(.data$pilot_type, .data$percentile) |>
-  dplyr::arrange(.data$pilot_type, .data$percentile)
+  filter(.data$pilot_type == "airline", .data$percentile %in% c("mean", "median")) |>
+  distinct(.data$pilot_type, .data$percentile) |>
+  arrange(.data$pilot_type, .data$percentile)
 
-geography_variants <- tibble::tribble(
+geography_variants <- tribble(
   ~geography_variant, ~excluded_states,
   "no_AK_HI", list(c("AK", "HI")),
   "all_states", list(character(0))
@@ -220,12 +220,12 @@ geography_variants <- tibble::tribble(
 
 ## 1.1 SOI Binscatter Figures ----
 
-purrr::walk(
+walk(
   soi_cases$percentile,
   function(percentile) {
     case_percentile <- percentile
 
-    purrr::pwalk(
+    pwalk(
       geography_variants,
       function(geography_variant, excluded_states) {
         case_geography_variant <- geography_variant
@@ -233,8 +233,8 @@ purrr::walk(
 
         save_case_binscatters(
           data = pilot_tax_soi |>
-            dplyr::filter(.data$percentile == .env$case_percentile) |>
-            dplyr::mutate(
+            filter(.data$percentile == .env$case_percentile) |>
+            mutate(
               astr = .data$astr * 100,
               atr = .data$atr * 100
             ),
@@ -251,13 +251,13 @@ purrr::walk(
 
 ## 1.2 BLS Binscatter Figures ----
 
-purrr::pwalk(
+pwalk(
   bls_cases,
   function(pilot_type, percentile) {
     case_pilot_type <- pilot_type
     case_percentile <- percentile
 
-    purrr::pwalk(
+    pwalk(
       geography_variants,
       function(geography_variant, excluded_states) {
         case_geography_variant <- geography_variant
@@ -265,11 +265,11 @@ purrr::pwalk(
 
         save_case_binscatters(
           data = pilot_tax_bls |>
-            dplyr::filter(
+            filter(
               .data$pilot_type == .env$case_pilot_type,
               .data$percentile == .env$case_percentile
             ) |>
-            dplyr::mutate(
+            mutate(
               astr = .data$astr * 100,
               atr = .data$atr * 100
             ),

@@ -11,7 +11,7 @@ trim_missing <- function(x) {
 }
 
 extract_year_from_path <- function(path) {
-  year_text <- stringr::str_extract(basename(path), "\\d{4}")
+  year_text <- str_extract(basename(path), "\\d{4}")
 
   if (is.na(year_text)) {
     stop(sprintf("Could not extract a 4-digit year from '%s'.", path), call. = FALSE)
@@ -90,24 +90,24 @@ discover_faa_flat_inputs <- function(paths, years = NULL) {
     full.names = TRUE
   )
 
-  basic_index <- tibble::tibble(
+  basic_index <- tibble(
     year = vapply(basic_files, extract_year_from_path, integer(1)),
     basic_path = basic_files
   )
 
-  cert_index <- tibble::tibble(
+  cert_index <- tibble(
     year = vapply(cert_files, extract_year_from_path, integer(1)),
     cert_path = cert_files
   )
 
-  inputs <- dplyr::inner_join(basic_index, cert_index, by = "year") |>
-    dplyr::arrange(.data$year)
+  inputs <- inner_join(basic_index, cert_index, by = "year") |>
+    arrange(.data$year)
 
   available_years <- inputs$year
   selected_years <- filter_years(available_years, years)
 
-  inputs <- dplyr::filter(inputs, .data$year %in% selected_years) |>
-    dplyr::mutate(source = "faa_flat")
+  inputs <- filter(inputs, .data$year %in% selected_years) |>
+    mutate(source = "faa_flat")
 
   if (nrow(inputs) == 0) {
     stop("No FAA flat-file inputs were discovered.", call. = FALSE)
@@ -124,17 +124,17 @@ discover_aviationdb_inputs <- function(paths, years = NULL) {
     full.names = TRUE
   )
 
-  inputs <- tibble::tibble(
+  inputs <- tibble(
     year = vapply(files, extract_year_from_path, integer(1)),
     aviationdb_path = files
   ) |>
-    dplyr::arrange(.data$year)
+    arrange(.data$year)
 
   available_years <- inputs$year
   selected_years <- filter_years(available_years, years)
 
-  inputs <- dplyr::filter(inputs, .data$year %in% selected_years) |>
-    dplyr::mutate(source = "aviationdb")
+  inputs <- filter(inputs, .data$year %in% selected_years) |>
+    mutate(source = "aviationdb")
 
   if (nrow(inputs) == 0) {
     stop("No AviationDB inputs were discovered.", call. = FALSE)
@@ -158,8 +158,8 @@ discover_ingest_inputs <- function(paths, source = "faa_flat", years = NULL) {
 # Both ingest paths are expected to produce one pilot row per year.
 assert_unique_pilot_year <- function(data, source) {
   duplicates <- data |>
-    dplyr::count(.data$unique_id, name = "n") |>
-    dplyr::filter(.data$n > 1)
+    count(.data$unique_id, name = "n") |>
+    filter(.data$n > 1)
 
   if (nrow(duplicates) > 0) {
     stop(
@@ -177,41 +177,41 @@ assert_unique_pilot_year <- function(data, source) {
 
 # This reader keeps only the minimal shared schema used by both ingest sources.
 read_faa_flat_year <- function(year, basic_path, cert_path) {
-  basic <- readr::read_csv(
+  basic <- read_csv(
     basic_path,
     na = c("", "NA"),
     show_col_types = FALSE,
     name_repair = "unique_quiet",
-    col_types = readr::cols(.default = readr::col_character())
+    col_types = cols(.default = col_character())
   ) |>
-    janitor::clean_names() |>
-    dplyr::transmute(
+    clean_names() |>
+    transmute(
       unique_id = trim_missing(.data$unique_id),
       state = trim_missing(.data$state),
       zip_code = trim_missing(.data$zip_code)
     )
 
-  cert <- readr::read_csv(
+  cert <- read_csv(
     cert_path,
     na = c("", "NA"),
     show_col_types = FALSE,
     name_repair = "unique_quiet",
-    col_types = readr::cols(.default = readr::col_character())
+    col_types = cols(.default = col_character())
   ) |>
-    janitor::clean_names() |>
-    dplyr::transmute(
+    clean_names() |>
+    transmute(
       unique_id = trim_missing(.data$unique_id),
       certificate_type = trim_missing(.data$type),
       certificate_level = trim_missing(.data$level)
     ) |>
-    dplyr::filter(.data$certificate_type == "P") |>
-    dplyr::select(-"certificate_type")
+    filter(.data$certificate_type == "P") |>
+    select(-"certificate_type")
 
   assert_unique_pilot_year(cert, "faa_flat")
 
   cert |>
-    dplyr::left_join(basic, by = "unique_id") |>
-    dplyr::transmute(
+    left_join(basic, by = "unique_id") |>
+    transmute(
       year = as.integer(year),
       unique_id = .data$unique_id,
       state = .data$state,
@@ -223,15 +223,15 @@ read_faa_flat_year <- function(year, basic_path, cert_path) {
 
 # This reader preserves the richer FAA columns needed to replicate legacy cleaning.
 read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
-  basic <- readr::read_csv(
+  basic <- read_csv(
     basic_path,
     na = c("", "NA"),
     show_col_types = FALSE,
     name_repair = "unique_quiet",
-    col_types = readr::cols(.default = readr::col_character())
+    col_types = cols(.default = col_character())
   ) |>
-    janitor::clean_names() |>
-    dplyr::transmute(
+    clean_names() |>
+    transmute(
       unique_id = trim_missing(.data$unique_id),
       first_name = trim_missing(.data$first_name),
       last_name = trim_missing(.data$last_name),
@@ -247,15 +247,15 @@ read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
       med_exp_date = trim_missing(.data$med_exp_date)
     )
 
-  cert <- readr::read_csv(
+  cert <- read_csv(
     cert_path,
     na = c("", "NA"),
     show_col_types = FALSE,
     name_repair = "unique_quiet",
-    col_types = readr::cols(.default = readr::col_character())
+    col_types = cols(.default = col_character())
   ) |>
-    janitor::clean_names() |>
-    dplyr::transmute(
+    clean_names() |>
+    transmute(
       unique_id = trim_missing(.data$unique_id),
       first_name = trim_missing(.data$first_name),
       last_name = trim_missing(.data$last_name),
@@ -263,17 +263,17 @@ read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
       level = trim_missing(.data$level),
       expire_date = trim_missing(.data$expire_date)
     ) |>
-    dplyr::filter(.data$type == "P")
+    filter(.data$type == "P")
 
   assert_unique_pilot_year(cert, "faa_flat")
 
   cert |>
-    dplyr::left_join(basic, by = "unique_id", suffix = c("_cert", "")) |>
-    dplyr::mutate(
-      first_name = dplyr::coalesce(.data$first_name, .data$first_name_cert),
-      last_name = dplyr::coalesce(.data$last_name, .data$last_name_cert)
+    left_join(basic, by = "unique_id", suffix = c("_cert", "")) |>
+    mutate(
+      first_name = coalesce(.data$first_name, .data$first_name_cert),
+      last_name = coalesce(.data$last_name, .data$last_name_cert)
     ) |>
-    dplyr::transmute(
+    transmute(
       year = as.integer(year),
       unique_id = .data$unique_id,
       first_name = .data$first_name,
@@ -297,13 +297,13 @@ read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
 
 # AviationDB already matches the future minimal contract closely.
 read_aviationdb_year <- function(year, aviationdb_path) {
-  data <- readr::read_tsv(
+  data <- read_tsv(
     aviationdb_path,
     na = c("", "NA"),
     show_col_types = FALSE,
-    col_types = readr::cols(.default = readr::col_character())
+    col_types = cols(.default = col_character())
   ) |>
-    dplyr::transmute(
+    transmute(
       unique_id = trim_missing(.data$unique_id),
       state = trim_missing(.data$state),
       zip_code = trim_missing(.data$zip_code),
@@ -313,7 +313,7 @@ read_aviationdb_year <- function(year, aviationdb_path) {
   assert_unique_pilot_year(data, "aviationdb")
 
   data |>
-    dplyr::transmute(
+    transmute(
       year = as.integer(year),
       unique_id = .data$unique_id,
       state = .data$state,
@@ -339,8 +339,8 @@ build_pilot_ingest_dataset <- function(paths, source = "faa_flat", years = NULL)
     read_aviationdb_year(row$year[[1]], row$aviationdb_path[[1]])
   })
 
-  dplyr::bind_rows(rows) |>
-    dplyr::arrange(.data$year, .data$unique_id)
+  bind_rows(rows) |>
+    arrange(.data$year, .data$unique_id)
 }
 
 # This FAA-only builder exists so the cleaning stage can still replicate legacy outputs.
@@ -357,6 +357,6 @@ build_faa_rich_ingest_dataset <- function(paths, years = NULL) {
     )
   })
 
-  dplyr::bind_rows(rows) |>
-    dplyr::arrange(.data$year, .data$unique_id)
+  bind_rows(rows) |>
+    arrange(.data$year, .data$unique_id)
 }
