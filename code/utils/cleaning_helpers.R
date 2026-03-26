@@ -102,6 +102,122 @@ build_sum_stat_prop_pilots <- function(main_us_pilots_atr, tot_working_pop) {
     dplyr::mutate(prop_atr_pilots = .data$n_atr_pilots / .data$tot_work_pop * 100)
 }
 
+# Pilot Mover Analysis Helpers ----
+
+select_mover_panel_columns <- function(main_us_pilots_atr) {
+  main_us_pilots_atr |>
+    dplyr::select(
+      "year",
+      "fips",
+      "statefull",
+      "state",
+      "unique_id",
+      "first_name",
+      "last_name",
+      "street_1",
+      "city",
+      "zip_code",
+      "num_years"
+    )
+}
+
+build_pilot_mover_panel <- function(data) {
+  data |>
+    dplyr::arrange(.data$unique_id, .data$year) |>
+    dplyr::group_by(.data$unique_id) |>
+    dplyr::mutate(
+      dest_state = .data$state,
+      origin_state = dplyr::lag(.data$dest_state),
+      moved = dplyr::if_else(
+        !is.na(.data$origin_state) & (.data$dest_state != .data$origin_state),
+        1L,
+        0L
+      )
+    ) |>
+    dplyr::relocate("origin_state", "moved", .after = "dest_state") |>
+    dplyr::ungroup()
+}
+
+add_pilot_move_counts <- function(data) {
+  data |>
+    dplyr::group_by(.data$unique_id) |>
+    dplyr::mutate(num_moves = sum(.data$moved, na.rm = TRUE)) |>
+    dplyr::relocate("num_moves", .after = "moved") |>
+    dplyr::ungroup()
+}
+
+add_flow_time_fields <- function(data) {
+  data |>
+    dplyr::arrange(.data$unique_id, .data$year) |>
+    dplyr::group_by(.data$unique_id) |>
+    dplyr::mutate(
+      lag_year = dplyr::lag(.data$year),
+      time_period_yrs = as.integer(.data$year - .data$lag_year)
+    ) |>
+    dplyr::relocate("lag_year", "time_period_yrs", .after = "year") |>
+    dplyr::ungroup()
+}
+
+build_mover_period_summary <- function(mover_panel) {
+  period_month_map <- tibble::tribble(
+    ~period_key,   ~time_period,            ~months_between,
+    "2009-2010", "11/2009 - 05/2010",  6,
+    "2010-2011", "05/2010 - 09/2011", 16,
+    "2011-2014", "09/2011 - 09/2014", 36,
+    "2014-2015", "09/2014 - 09/2015", 12,
+    "2015-2016", "09/2015 - 11/2016", 14,
+    "2016-2017", "11/2016 - 09/2017", 10,
+    "2017-2019", "06/2017 - 06/2019", 24,
+    "2019-2022", "06/2019 - 10/2022", 40,
+    "2022-2024", "10/2022 - 09/2024", 23
+  )
+
+  mover_panel |>
+    dplyr::group_by(.data$year) |>
+    dplyr::summarise(
+      n_pilots = dplyr::n(),
+      n_moved = sum(.data$moved, na.rm = TRUE),
+      prop_moved = .data$n_moved / .data$n_pilots * 100,
+      .groups = "drop"
+    ) |>
+    dplyr::mutate(
+      lag_year = dplyr::lag(.data$year),
+      period_key = paste(.data$lag_year, .data$year, sep = "-")
+    ) |>
+    dplyr::filter(!is.na(.data$lag_year)) |>
+    dplyr::left_join(period_month_map, by = "period_key") |>
+    dplyr::mutate(monthly_prop_moved = .data$prop_moved / .data$months_between) |>
+    dplyr::select(
+      "time_period",
+      "n_pilots",
+      "n_moved",
+      "monthly_prop_moved"
+    ) |>
+    dplyr::rename(
+      `Time period` = "time_period",
+      `# of pilots` = "n_pilots",
+      `# of movers` = "n_moved",
+      `Ave. monthly % moved` = "monthly_prop_moved"
+    ) |>
+    as.data.frame()
+}
+
+build_migration_flow_table <- function(data) {
+  flow_data <- data |>
+    dplyr::filter(!is.na(.data$origin_state), !is.na(.data$dest_state))
+
+  as.matrix(table(flow_data$origin_state, flow_data$dest_state))
+}
+
+select_top_states_by_average_atr_count <- function(sum_stat_prop_atr_pilots, n_states = 10L) {
+  sum_stat_prop_atr_pilots |>
+    dplyr::group_by(.data$state) |>
+    dplyr::summarise(avg_n_atr_pilots = mean(.data$n_atr_pilots), .groups = "drop") |>
+    dplyr::arrange(dplyr::desc(.data$avg_n_atr_pilots), .data$state) |>
+    dplyr::slice_head(n = n_states) |>
+    dplyr::pull(.data$state)
+}
+
 # Analysis Builders ----
 
 build_state_prop_bins <- function(data) {

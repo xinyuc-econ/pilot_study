@@ -19,7 +19,8 @@ required_packages <- c(
   "purrr",
   "usincometaxes",
   "tibble",
-  "testthat"
+  "testthat",
+  "xtable"
 )
 
 # Project Paths ----
