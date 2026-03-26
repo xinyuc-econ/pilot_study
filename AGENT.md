@@ -25,6 +25,7 @@
 - The zero-tax striped overlay used in analysis plots is validated on this machine with `ggplot2 4.0.2` and `ggpattern 1.3.1`; keep that pair aligned if the exact legacy look is required.
 - TAXSIM robustness work belongs in `code/02_clean/`; write split input cases under `data/derived/taxsim/` and runner outputs under `data/derived/taxsim_output/`.
 - Keep post-TAXSIM PIT measure construction as its own `code/02_clean/` step rather than merging it into the TAXSIM runner.
+- Keep merged pilot-tax analysis datasets as their own `code/02_clean/` step after PIT construction, then generate binscatter figures from those datasets in `code/03_analysis/`.
 - Keep SOI and BLS PIT outputs separate unless a later analysis step explicitly needs a combined file.
 - The clean ingest contract is a canonical pilot-year dataset with shared fields across FAA flat files and AviationDB yearly TSVs.
 

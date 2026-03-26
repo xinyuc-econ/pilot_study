@@ -404,6 +404,18 @@ run_taxsim_case_file <- function(path, output_dir, return_all_information = TRUE
     return_all_information = return_all_information
   )
 
+  if (!"taxsimid" %in% names(tax_results)) {
+    stop("TAXSIM results are missing `taxsimid`; cannot safely join results back to inputs.", call. = FALSE)
+  }
+
+  if (nrow(tax_results) != nrow(input_data)) {
+    stop("TAXSIM output row count does not match the input case file row count.", call. = FALSE)
+  }
+
+  if (anyDuplicated(tax_results$taxsimid) > 0) {
+    stop("TAXSIM results contain duplicated `taxsimid` values.", call. = FALSE)
+  }
+
   output_data <- input_data |>
     dplyr::left_join(tax_results, by = "taxsimid")
 
@@ -461,6 +473,25 @@ discover_taxsim_output_files <- function(paths, requested_method = NULL) {
   discovered
 }
 
+assert_unique_case_rows <- function(data, keys, dataset_name) {
+  duplicates <- data |>
+    dplyr::count(dplyr::across(dplyr::all_of(keys)), name = "n") |>
+    dplyr::filter(.data$n > 1)
+
+  if (nrow(duplicates) > 0) {
+    stop(
+      paste0(
+        dataset_name,
+        " contains duplicated rows for keys: ",
+        paste(keys, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  data
+}
+
 build_pit_measures <- function(data) {
   data |>
     dplyr::mutate(
@@ -485,7 +516,11 @@ load_soi_pit_measures <- function(paths) {
   ) |>
     dplyr::left_join(xwalk, by = c("state" = "irs_soi_code")) |>
     dplyr::rename(fips = "fips_code") |>
-    dplyr::select(-"state", -"state_name")
+    dplyr::select(-"state", -"state_name") |>
+    assert_unique_case_rows(
+      keys = c("year", "fips", "percentile"),
+      dataset_name = "SOI PIT measures"
+    )
 }
 
 build_soi_pit_wide <- function(data) {
@@ -524,5 +559,113 @@ load_bls_pit_measures <- function(paths) {
   ) |>
     dplyr::left_join(xwalk, by = c("state" = "irs_soi_code")) |>
     dplyr::rename(fips = "fips_code") |>
-    dplyr::select(-"state", -"state_name", -"occ_code")
+    dplyr::select(-"state", -"state_name", -"occ_code") |>
+    assert_unique_case_rows(
+      keys = c("year", "fips", "pilot_type", "percentile"),
+      dataset_name = "BLS PIT measures"
+    )
+}
+
+# Pilot-Tax Analysis Builders ----
+
+build_soi_pilot_tax_analysis <- function(prop_pilots, pit_soi_wide, state_crosswalk) {
+  pit_soi_long <- pit_soi_wide |>
+    dplyr::left_join(
+      state_crosswalk |>
+        dplyr::select("fips", "state"),
+      by = "fips"
+    ) |>
+    tidyr::pivot_longer(
+      cols = tidyselect::matches("^(astr|atr)_"),
+      names_to = c(".value", "percentile"),
+      names_sep = "_"
+    ) |>
+    dplyr::mutate(method = "soi")
+
+  merged <- pit_soi_long |>
+    dplyr::left_join(prop_pilots, by = c("year", "state")) |>
+    dplyr::select(
+      "method",
+      "percentile",
+      "year",
+      "fips",
+      "state",
+      "n_atr_pilots",
+      "tot_work_pop",
+      "prop_atr_pilots",
+      "astr",
+      "atr"
+    )
+
+  if (anyNA(merged$prop_atr_pilots)) {
+    stop("SOI pilot-tax analysis data has unmatched pilot-share rows.", call. = FALSE)
+  }
+
+  assert_unique_case_rows(
+    merged,
+    keys = c("year", "fips", "percentile"),
+    dataset_name = "SOI pilot-tax analysis data"
+  )
+}
+
+build_bls_pilot_tax_analysis <- function(prop_pilots, pit_bls, state_crosswalk) {
+  merged <- pit_bls |>
+    dplyr::left_join(
+      state_crosswalk |>
+        dplyr::select("fips", "state"),
+      by = "fips"
+    ) |>
+    dplyr::mutate(method = "bls") |>
+    dplyr::left_join(prop_pilots, by = c("year", "state")) |>
+    dplyr::select(
+      "method",
+      "pilot_type",
+      "percentile",
+      "year",
+      "fips",
+      "state",
+      "n_atr_pilots",
+      "tot_work_pop",
+      "prop_atr_pilots",
+      "astr",
+      "atr"
+    )
+
+  if (anyNA(merged$prop_atr_pilots)) {
+    stop("BLS pilot-tax analysis data has unmatched pilot-share rows.", call. = FALSE)
+  }
+
+  assert_unique_case_rows(
+    merged,
+    keys = c("year", "fips", "pilot_type", "percentile"),
+    dataset_name = "BLS pilot-tax analysis data"
+  )
+}
+
+format_soi_percentile_label <- function(percentile) {
+  percentile_num <- stringr::str_remove(percentile, "^p")
+  sprintf("%sth income percentile", percentile_num)
+}
+
+build_binscatter_output_filename <- function(method, tax_measure, percentile, geography_variant, pilot_type = NULL) {
+  if (method == "soi") {
+    return(sprintf(
+      "binscatter_%s_pilots_soi_%s_%s.png",
+      tax_measure,
+      percentile,
+      geography_variant
+    ))
+  }
+
+  if (method == "bls") {
+    return(sprintf(
+      "binscatter_%s_pilots_bls_%s_%s_%s.png",
+      tax_measure,
+      pilot_type,
+      percentile,
+      geography_variant
+    ))
+  }
+
+  stop("Unsupported binscatter method.", call. = FALSE)
 }

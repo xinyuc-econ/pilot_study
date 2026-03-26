@@ -11,6 +11,7 @@ required_packages <- c(
   "janitor",
   "readxl",
   "ggplot2",
+  "binsreg",
   "usmap",
   "stargazer",
   "sf",

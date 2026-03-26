@@ -25,7 +25,7 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 - Additional tax-input sources currently include `raw/bls` and `raw/soi`
 - Crosswalk files are external under `xwalks/`
 - `data/intermediate/`: generated pooled or harmonized datasets
-- `data/derived/`: generated analysis-ready datasets plus PIT measure datasets, TAXSIM inputs, and TAXSIM outputs
+- `data/derived/`: generated analysis-ready datasets plus PIT measure datasets, pilot-tax merged analysis datasets, TAXSIM inputs, and TAXSIM outputs
 - `output/figures/`: presentation figures
 - `output/tables/`: exported summary tables
 
@@ -40,5 +40,6 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 - Do not add new production logic to `legacy_code/`
 - Keep plotting in `code/03_analysis/`, not in cleaning scripts
 - Keep post-TAXSIM PIT measure construction in `code/02_clean/`, not in the TAXSIM runner
+- Keep merged pilot-tax analysis datasets in `code/02_clean/`, then build binscatters from them in `code/03_analysis/`
 - Do not duplicate reusable helper logic across stage scripts
 - Keep scripts thin and pass information between stages through files, not workspace objects
