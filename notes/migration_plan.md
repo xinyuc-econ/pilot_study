@@ -12,3 +12,5 @@ Suggested columns:
 | `legacy_code/analysis/mover_analysis.R` | Mover summary and migration flow tables | `code/03_analysis/06_mover_tables.R` | In progress | Validate with `code/99_validation/validate_mover_outputs.R` |
 | `legacy_code/cleaning/mb_mover_ols_bls.R` | Build pilot-level BLS tax-merged ATR datasets | `code/02_clean/07_build_pilots_atr_tax_merged_bls.R` | In progress | Validate airline mean dataset against a legacy-equivalent reconstruction |
 | `legacy_code/cleaning/mb_mover_ols_bls.R` | Main BLS airline mean LPM table | `code/03_analysis/07_lpm_bls_airline_mean.R` | In progress | Validate sample row count and coefficients against legacy-equivalent logic |
+| `legacy_code/cleaning/mb_mover_ols.R` | Build pilot-level SOI tax-merged ATR datasets | `code/02_clean/07_build_pilots_atr_tax_merged_bls.R` | In progress | Validate the SOI p95 dataset against a legacy-equivalent reconstruction |
+| `legacy_code/cleaning/mb_mover_ols.R` | Main SOI mover LPM tables | `code/03_analysis/07_lpm_bls_airline_mean.R` | In progress | Validate SOI p95 sample and regression specification against the legacy script |
