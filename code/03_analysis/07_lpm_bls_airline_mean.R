@@ -5,7 +5,6 @@
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
-source("code/utils/cleaning_helpers.R")
 
 setFixest_nthreads(1)
 
@@ -13,7 +12,7 @@ pilot_tax_merged <- read_csv(
   file.path(paths$derived, "pilots_atr_tax_merged_bls_airline_mean.csv"),
   show_col_types = FALSE
 ) |>
-  mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(year))
 
 table_path <- file.path(paths$tables, "lpm_bls_airline_mean.tex")
 
@@ -21,18 +20,18 @@ table_path <- file.path(paths$tables, "lpm_bls_airline_mean.tex")
 
 # Keep the legacy sample rule visible here because it is part of the regression specification.
 lpm_sample <- pilot_tax_merged |>
-  filter(.data$year != 2024) |>
-  group_by(.data$unique_id) |>
+  filter(year != 2024) |>
+  group_by(unique_id) |>
   mutate(num_years = n()) |>
   ungroup() |>
-  filter(!is.na(.data$origin_fips), .data$num_years == 9) |>
+  filter(!is.na(origin_fips), num_years == 9) |>
   filter(
-    .data$origin_state != "AK",
-    .data$origin_state != "HI",
-    .data$dest_state != "AK",
-    .data$dest_state != "HI"
+    origin_state != "AK",
+    origin_state != "HI",
+    dest_state != "AK",
+    dest_state != "HI"
   ) |>
-  mutate(net_origin_atr = (1 - .data$origin_atr) * 100)
+  mutate(net_origin_atr = (1 - origin_atr) * 100)
 
 o1 <- feols(
   moved ~ net_origin_atr | year + origin_state + unique_id,

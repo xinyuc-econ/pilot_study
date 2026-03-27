@@ -5,7 +5,6 @@
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
-source("code/utils/cleaning_helpers.R")
 
 state_prop_data <- read_csv(
   file.path(paths$derived, "sum_stat_prop_atr_pilots.csv"),
@@ -26,22 +25,63 @@ residual_zero_tax_map_path <- file.path(paths$figures, "atr_pilot_share_residual
 
 summary_table_data <- state_prop_data |>
   mutate(
-    n_atr_pilots = .data$n_atr_pilots / 1000,
-    tot_work_pop = .data$tot_work_pop / 1000
+    n_atr_pilots = n_atr_pilots / 1000,
+    tot_work_pop = tot_work_pop / 1000
   ) |>
   as.data.frame()
 
-state_prop_binned <- build_state_prop_bins(state_prop_data)
+state_prop_binned <- state_prop_data |>
+  mutate(
+    prop_bins = cut(prop_atr_pilots, breaks = c(0.01, 0.05, 0.1, 0.2, 0.55))
+  )
+
 state_prop_binned_2024 <- state_prop_binned |>
-  filter(.data$year == 2024)
+  filter(year == 2024)
 
-state_prop_change <- build_state_prop_change(state_prop_data)
+state_prop_change <- state_prop_data |>
+  filter(year %in% c(2009, 2024)) |>
+  arrange(state, year) |>
+  group_by(state) |>
+  mutate(
+    lag_prop_atr_pilots = lag(prop_atr_pilots),
+    d_prop_atr_pilots = log(prop_atr_pilots) - log(lag_prop_atr_pilots),
+    lag_n_atr_pilots = lag(n_atr_pilots),
+    d_n_atr_pilots = log(n_atr_pilots) - log(lag_n_atr_pilots)
+  ) |>
+  ungroup() |>
+  filter(!is.na(d_prop_atr_pilots)) |>
+  mutate(
+    d_prop_bins = cut(d_prop_atr_pilots, breaks = c(-0.35, -0.15, -0.01, 0.01, 0.15, 0.4))
+  )
 
-state_total_share <- build_state_total_share(state_prop_data)
+state_total_share <- state_prop_data |>
+  group_by(year) |>
+  mutate(N_atr_pilots = sum(n_atr_pilots)) |>
+  ungroup() |>
+  mutate(
+    prop_atr_pilots_ofall = n_atr_pilots / N_atr_pilots * 100,
+    prop_bins = cut(prop_atr_pilots_ofall, breaks = c(0, 1, 2, 3, 10, 13))
+  )
+
 state_total_share_2024 <- state_total_share |>
-  filter(.data$year == 2024)
+  filter(year == 2024)
 
-residual_state_map <- build_residual_state_map(state_total_share, zero_states)
+data_2024 <- state_total_share |>
+  filter(year == 2024)
+
+residual_model <- lm(prop_atr_pilots_ofall ~ tot_work_pop, data = data_2024)
+
+residual_data <- data_2024 |>
+  mutate(
+    pred = predict(residual_model, newdata = data_2024),
+    resid = prop_atr_pilots_ofall - pred,
+    resid_binned = cut(resid, c(-4, -1, 0, 1, 4, 7))
+  )
+
+residual_state_map <- us_map(regions = "states") |>
+  st_as_sf() |>
+  left_join(residual_data, by = c("abbr" = "state")) |>
+  mutate(zero_tax = abbr %in% zero_states)
 
 # 1. Tables ----
 
@@ -156,7 +196,7 @@ ggsave(total_share_map_path, plot = total_share_map_2024, width = 16, height = 1
 ## 2.5 Residual ATR Pilot Share Map in 2024 ----
 
 residual_map <- ggplot(residual_state_map) +
-  geom_sf(aes(fill = .data$resid_binned), color = "white", alpha = 0.9) +
+  geom_sf(aes(fill = resid_binned), color = "white", alpha = 0.9) +
   scale_fill_viridis_d(name = "Residual Bin", direction = -1) +
   labs(title = "Residuals from Regression of Pilot Share on State Total Working Population (2024)") +
   theme_minimal() +
@@ -174,11 +214,11 @@ ggsave(residual_map_path, plot = residual_map, width = 13, height = 8)
 
 ## 2.6 Residual ATR Pilot Share Map with Zero-Tax Overlay in 2024 ----
 residual_zero_tax_map <- ggplot(residual_state_map) +
-  geom_sf(aes(fill = .data$resid_binned), color = "white", alpha = 0.9) +
+  geom_sf(aes(fill = resid_binned), color = "white", alpha = 0.9) +
   scale_fill_viridis_d(name = "Residual Bin", direction = -1) +
   geom_sf_pattern(
     data = residual_state_map[residual_state_map$zero_tax, ],
-    aes(pattern = .data$zero_tax),
+    aes(pattern = zero_tax),
     fill = NA,
     pattern_color = "black",
     pattern_density = 0.1,

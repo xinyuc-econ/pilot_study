@@ -5,7 +5,6 @@
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
-source("code/utils/cleaning_helpers.R")
 
 pilot_tax_soi <- read_csv(
   file.path(paths$derived, "pilot_tax_analysis_soi.csv"),
@@ -21,6 +20,34 @@ compute_all_states_y_limits <- function(data) {
   y_range <- range(data$prop_atr_pilots, na.rm = TRUE)
   padding <- max((y_range[2] - y_range[1]) * 0.05, 0.005)
   c(0.04, min(0.16, y_range[2] + padding))
+}
+
+format_soi_percentile_label <- function(percentile) {
+  percentile_num <- str_remove(percentile, "^p")
+  sprintf("%sth income percentile", percentile_num)
+}
+
+build_binscatter_output_filename <- function(method, tax_measure, percentile, geography_variant, pilot_type = NULL) {
+  if (method == "soi") {
+    return(sprintf(
+      "binscatter_%s_pilots_soi_%s_%s.png",
+      tax_measure,
+      percentile,
+      geography_variant
+    ))
+  }
+
+  if (method == "bls") {
+    return(sprintf(
+      "binscatter_%s_pilots_bls_%s_%s_%s.png",
+      tax_measure,
+      pilot_type,
+      percentile,
+      geography_variant
+    ))
+  }
+
+  stop("Unsupported binscatter method.", call. = FALSE)
 }
 
 apply_legacy_binscatter_style <- function(
@@ -119,7 +146,7 @@ save_case_binscatters <- function(
 ) {
   filtered_data <- if (length(excluded_states) > 0) {
     data |>
-      filter(!.data$state %in% excluded_states)
+      filter(!state %in% excluded_states)
   } else {
     data
   }
@@ -206,9 +233,9 @@ save_case_binscatters <- function(
 soi_cases <- tibble(percentile = c("p90", "p95", "p99"))
 
 bls_cases <- pilot_tax_bls |>
-  filter(.data$pilot_type == "airline", .data$percentile %in% c("mean", "median")) |>
-  distinct(.data$pilot_type, .data$percentile) |>
-  arrange(.data$pilot_type, .data$percentile)
+  filter(pilot_type == "airline", percentile %in% c("mean", "median")) |>
+  distinct(pilot_type, percentile) |>
+  arrange(pilot_type, percentile)
 
 geography_variants <- tribble(
   ~geography_variant, ~excluded_states,
@@ -233,10 +260,10 @@ walk(
 
         save_case_binscatters(
           data = pilot_tax_soi |>
-            filter(.data$percentile == .env$case_percentile) |>
+            filter(percentile == case_percentile) |>
             mutate(
-              astr = .data$astr * 100,
-              atr = .data$atr * 100
+              astr = astr * 100,
+              atr = atr * 100
             ),
           method = "soi",
           percentile = case_percentile,
@@ -266,12 +293,12 @@ pwalk(
         save_case_binscatters(
           data = pilot_tax_bls |>
             filter(
-              .data$pilot_type == .env$case_pilot_type,
-              .data$percentile == .env$case_percentile
+              pilot_type == case_pilot_type,
+              percentile == case_percentile
             ) |>
             mutate(
-              astr = .data$astr * 100,
-              atr = .data$atr * 100
+              astr = astr * 100,
+              atr = atr * 100
             ),
           method = "bls",
           percentile = case_percentile,

@@ -24,11 +24,11 @@ atr_map_path <- file.path(paths$figures, "atr_maps_soi_p95.png")
 
 pit_for_plot <- pit |>
   left_join(state_crosswalk, by = "fips") |>
-  filter(.data$year >= 2009) |>
+  filter(year >= 2009) |>
   select("year", "state", "srate_p95", "astr_p95", "atr_p95") |>
   mutate(
-    astr_p95 = .data$astr_p95 * 100,
-    atr_p95 = .data$atr_p95 * 100
+    astr_p95 = astr_p95 * 100,
+    atr_p95 = atr_p95 * 100
   )
 
 summary_table_data <- pit_for_plot |>

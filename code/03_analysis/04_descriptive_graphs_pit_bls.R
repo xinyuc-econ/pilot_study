@@ -22,8 +22,8 @@ atr_map_path <- file.path(paths$figures, "atr_maps_bls_airline_mean.png")
 pit_airline_mean <- pit |>
   left_join(state_crosswalk, by = "fips") |>
   select("pilot_type", "percentile", "year", "state", "atr") |>
-  mutate(atr = .data$atr * 100) |>
-  filter(.data$pilot_type == "airline", .data$percentile == "mean")
+  mutate(atr = atr * 100) |>
+  filter(pilot_type == "airline", percentile == "mean")
 
 # 1. Figures ----
 

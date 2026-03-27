@@ -5,7 +5,6 @@
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
-source("code/utils/cleaning_helpers.R")
 
 # Inputs ----
 
@@ -14,14 +13,39 @@ main_us_pilots_atr <- read_csv(
   show_col_types = FALSE,
   col_types = cols(.default = col_character())
 ) |>
-  mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(year))
 
 # Derived Dataset ----
 
 mover_panel <- main_us_pilots_atr |>
-  select_mover_panel_columns() |>
-  build_pilot_mover_panel() |>
-  add_pilot_move_counts()
+  select(
+    "year",
+    "fips",
+    "statefull",
+    "state",
+    "unique_id",
+    "first_name",
+    "last_name",
+    "street_1",
+    "city",
+    "zip_code",
+    "num_years"
+  ) |>
+  arrange(unique_id, year) |>
+  group_by(unique_id) |>
+  mutate(
+    dest_state = state,
+    origin_state = lag(dest_state),
+    moved = if_else(
+      !is.na(origin_state) & (dest_state != origin_state),
+      1L,
+      0L
+    )
+  ) |>
+  relocate("origin_state", "moved", .after = "dest_state") |>
+  mutate(num_moves = sum(moved, na.rm = TRUE)) |>
+  relocate("num_moves", .after = "moved") |>
+  ungroup()
 
 # Outputs ----
 

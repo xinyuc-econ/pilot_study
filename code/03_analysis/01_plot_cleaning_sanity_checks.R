@@ -11,21 +11,21 @@ main_us_pilots_any <- read_csv(
   show_col_types = FALSE,
   col_types = cols(.default = col_character())
 ) |>
-  mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(year))
 
 main_us_pilots_atr <- read_csv(
   file.path(paths$derived, "main_us_pilots_atr.csv"),
   show_col_types = FALSE,
   col_types = cols(.default = col_character())
 ) |>
-  mutate(year = as.integer(.data$year))
+  mutate(year = as.integer(year))
 
 # 1. Figures ----
 
 ## 1.1 Composition of Pilot Certification Holders ----
 
 composition_plot <- main_us_pilots_any |>
-  ggplot(aes(x = as.factor(.data$year), fill = .data$level_collapsed)) +
+  ggplot(aes(x = as.factor(year), fill = level_collapsed)) +
   geom_bar() +
   scale_y_continuous(
     name = NULL,
@@ -59,7 +59,7 @@ ggsave(
 ## 1.2 Airline Transport Pilot Counts ----
 
 atr_plot <- main_us_pilots_atr |>
-  ggplot(aes(x = as.factor(.data$year))) +
+  ggplot(aes(x = as.factor(year))) +
   geom_bar(fill = "#FFCB05") +
   scale_y_continuous(
     name = NULL,

@@ -101,12 +101,12 @@ discover_faa_flat_inputs <- function(paths, years = NULL) {
   )
 
   inputs <- inner_join(basic_index, cert_index, by = "year") |>
-    arrange(.data$year)
+    arrange(year)
 
   available_years <- inputs$year
   selected_years <- filter_years(available_years, years)
 
-  inputs <- filter(inputs, .data$year %in% selected_years) |>
+  inputs <- filter(inputs, year %in% selected_years) |>
     mutate(source = "faa_flat")
 
   if (nrow(inputs) == 0) {
@@ -128,12 +128,12 @@ discover_aviationdb_inputs <- function(paths, years = NULL) {
     year = vapply(files, extract_year_from_path, integer(1)),
     aviationdb_path = files
   ) |>
-    arrange(.data$year)
+    arrange(year)
 
   available_years <- inputs$year
   selected_years <- filter_years(available_years, years)
 
-  inputs <- filter(inputs, .data$year %in% selected_years) |>
+  inputs <- filter(inputs, year %in% selected_years) |>
     mutate(source = "aviationdb")
 
   if (nrow(inputs) == 0) {
@@ -158,8 +158,8 @@ discover_ingest_inputs <- function(paths, source = "faa_flat", years = NULL) {
 # Both ingest paths are expected to produce one pilot row per year.
 assert_unique_pilot_year <- function(data, source) {
   duplicates <- data |>
-    count(.data$unique_id, name = "n") |>
-    filter(.data$n > 1)
+    count(unique_id, name = "n") |>
+    filter(n > 1)
 
   if (nrow(duplicates) > 0) {
     stop(
@@ -186,9 +186,9 @@ read_faa_flat_year <- function(year, basic_path, cert_path) {
   ) |>
     clean_names() |>
     transmute(
-      unique_id = trim_missing(.data$unique_id),
-      state = trim_missing(.data$state),
-      zip_code = trim_missing(.data$zip_code)
+      unique_id = trim_missing(unique_id),
+      state = trim_missing(state),
+      zip_code = trim_missing(zip_code)
     )
 
   cert <- read_csv(
@@ -200,11 +200,11 @@ read_faa_flat_year <- function(year, basic_path, cert_path) {
   ) |>
     clean_names() |>
     transmute(
-      unique_id = trim_missing(.data$unique_id),
-      certificate_type = trim_missing(.data$type),
-      certificate_level = trim_missing(.data$level)
+      unique_id = trim_missing(unique_id),
+      certificate_type = trim_missing(type),
+      certificate_level = trim_missing(level)
     ) |>
-    filter(.data$certificate_type == "P") |>
+    filter(certificate_type == "P") |>
     select(-"certificate_type")
 
   assert_unique_pilot_year(cert, "faa_flat")
@@ -213,10 +213,10 @@ read_faa_flat_year <- function(year, basic_path, cert_path) {
     left_join(basic, by = "unique_id") |>
     transmute(
       year = as.integer(year),
-      unique_id = .data$unique_id,
-      state = .data$state,
-      zip_code = .data$zip_code,
-      certificate_level = .data$certificate_level,
+      unique_id = unique_id,
+      state = state,
+      zip_code = zip_code,
+      certificate_level = certificate_level,
       source = "faa_flat"
     )
 }
@@ -232,19 +232,19 @@ read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
   ) |>
     clean_names() |>
     transmute(
-      unique_id = trim_missing(.data$unique_id),
-      first_name = trim_missing(.data$first_name),
-      last_name = trim_missing(.data$last_name),
-      street_1 = trim_missing(.data$street_1),
-      street_2 = trim_missing(.data$street_2),
-      city = trim_missing(.data$city),
-      state = trim_missing(.data$state),
-      zip_code = trim_missing(.data$zip_code),
-      country = trim_missing(.data$country),
-      region = trim_missing(.data$region),
-      med_class = trim_missing(.data$med_class),
-      med_date = trim_missing(.data$med_date),
-      med_exp_date = trim_missing(.data$med_exp_date)
+      unique_id = trim_missing(unique_id),
+      first_name = trim_missing(first_name),
+      last_name = trim_missing(last_name),
+      street_1 = trim_missing(street_1),
+      street_2 = trim_missing(street_2),
+      city = trim_missing(city),
+      state = trim_missing(state),
+      zip_code = trim_missing(zip_code),
+      country = trim_missing(country),
+      region = trim_missing(region),
+      med_class = trim_missing(med_class),
+      med_date = trim_missing(med_date),
+      med_exp_date = trim_missing(med_exp_date)
     )
 
   cert <- read_csv(
@@ -256,41 +256,41 @@ read_faa_flat_year_rich <- function(year, basic_path, cert_path) {
   ) |>
     clean_names() |>
     transmute(
-      unique_id = trim_missing(.data$unique_id),
-      first_name = trim_missing(.data$first_name),
-      last_name = trim_missing(.data$last_name),
-      type = trim_missing(.data$type),
-      level = trim_missing(.data$level),
-      expire_date = trim_missing(.data$expire_date)
+      unique_id = trim_missing(unique_id),
+      first_name = trim_missing(first_name),
+      last_name = trim_missing(last_name),
+      type = trim_missing(type),
+      level = trim_missing(level),
+      expire_date = trim_missing(expire_date)
     ) |>
-    filter(.data$type == "P")
+    filter(type == "P")
 
   assert_unique_pilot_year(cert, "faa_flat")
 
   cert |>
     left_join(basic, by = "unique_id", suffix = c("_cert", "")) |>
     mutate(
-      first_name = coalesce(.data$first_name, .data$first_name_cert),
-      last_name = coalesce(.data$last_name, .data$last_name_cert)
+      first_name = coalesce(first_name, first_name_cert),
+      last_name = coalesce(last_name, last_name_cert)
     ) |>
     transmute(
       year = as.integer(year),
-      unique_id = .data$unique_id,
-      first_name = .data$first_name,
-      last_name = .data$last_name,
-      street_1 = .data$street_1,
-      street_2 = .data$street_2,
-      city = .data$city,
-      state = .data$state,
-      zip_code = .data$zip_code,
-      country = .data$country,
-      region = .data$region,
-      med_class = .data$med_class,
-      med_date = .data$med_date,
-      med_exp_date = .data$med_exp_date,
-      type = .data$type,
-      level = .data$level,
-      expire_date = .data$expire_date,
+      unique_id = unique_id,
+      first_name = first_name,
+      last_name = last_name,
+      street_1 = street_1,
+      street_2 = street_2,
+      city = city,
+      state = state,
+      zip_code = zip_code,
+      country = country,
+      region = region,
+      med_class = med_class,
+      med_date = med_date,
+      med_exp_date = med_exp_date,
+      type = type,
+      level = level,
+      expire_date = expire_date,
       source = "faa_flat"
     )
 }
@@ -304,10 +304,10 @@ read_aviationdb_year <- function(year, aviationdb_path) {
     col_types = cols(.default = col_character())
   ) |>
     transmute(
-      unique_id = trim_missing(.data$unique_id),
-      state = trim_missing(.data$state),
-      zip_code = trim_missing(.data$zip_code),
-      certificate_level = trim_missing(.data$certificate_level)
+      unique_id = trim_missing(unique_id),
+      state = trim_missing(state),
+      zip_code = trim_missing(zip_code),
+      certificate_level = trim_missing(certificate_level)
     )
 
   assert_unique_pilot_year(data, "aviationdb")
@@ -315,10 +315,10 @@ read_aviationdb_year <- function(year, aviationdb_path) {
   data |>
     transmute(
       year = as.integer(year),
-      unique_id = .data$unique_id,
-      state = .data$state,
-      zip_code = .data$zip_code,
-      certificate_level = .data$certificate_level,
+      unique_id = unique_id,
+      state = state,
+      zip_code = zip_code,
+      certificate_level = certificate_level,
       source = "aviationdb"
     )
 }
@@ -340,7 +340,7 @@ build_pilot_ingest_dataset <- function(paths, source = "faa_flat", years = NULL)
   })
 
   bind_rows(rows) |>
-    arrange(.data$year, .data$unique_id)
+    arrange(year, unique_id)
 }
 
 # This FAA-only builder exists so the cleaning stage can still replicate legacy outputs.
@@ -358,5 +358,5 @@ build_faa_rich_ingest_dataset <- function(paths, years = NULL) {
   })
 
   bind_rows(rows) |>
-    arrange(.data$year, .data$unique_id)
+    arrange(year, unique_id)
 }

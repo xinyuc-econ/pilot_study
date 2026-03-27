@@ -21,24 +21,79 @@ pilot_data <- read_csv(
   show_col_types = FALSE,
   col_types = cols(.default = col_character())
 ) |>
-  mutate(year = as.integer(.data$year)) |>
-  filter(.data$year != 2025)
+  mutate(year = as.integer(year)) |>
+  filter(year != 2025)
 
 # Sample Restrictions and Enrichment ----
 
-processed_pilot_data <- add_us_migration_flags(pilot_data)
-always_in_main_us_pilots <- restrict_always_in_main_us(
-  processed_pilot_data,
-  excluded_territories = excluded_territories
-)
+processed_pilot_data <- pilot_data |>
+  filter(!is.na(country)) |>
+  group_by(unique_id) |>
+  mutate(
+    num_years = n_distinct(year),
+    num_USA = sum(country == "USA"),
+    never_in_US = num_USA == 0,
+    migrate_in_out_US = (num_USA > 0) & (num_USA < num_years)
+  ) |>
+  ungroup()
+
+always_in_main_us_pilots <- processed_pilot_data |>
+  filter(!never_in_US) |>
+  filter(!migrate_in_out_US) |>
+  group_by(unique_id) |>
+  mutate(
+    num_not_in_main_US = sum(state %in% excluded_territories),
+    always_in_main_US = num_not_in_main_US == 0
+  ) |>
+  filter(always_in_main_US) |>
+  ungroup() |>
+  select(
+    -all_of(c(
+      "num_USA",
+      "never_in_US",
+      "migrate_in_out_US",
+      "num_not_in_main_US",
+      "always_in_main_US"
+    ))
+  )
+
 state_fips_crosswalk <- load_state_fips_crosswalk(paths)
-main_us_pilots_any <- build_main_us_pilots_any(
-  always_in_main_us_pilots,
-  state_fips_crosswalk
+
+main_us_pilots_any <- state_fips_crosswalk |>
+  left_join(always_in_main_us_pilots, by = "state") |>
+  relocate(year) |>
+  mutate(
+    level_collapsed = case_when(
+      level == "A" ~ "ATR",
+      level == "C" ~ "C",
+      TRUE ~ "other"
+    )
+  )
+
+main_us_pilots_atr <- main_us_pilots_any |>
+  filter(level_collapsed == "ATR") |>
+  select(-level_collapsed, -level, -expire_date)
+
+csv_files <- list.files(
+  paths$raw_tot_working_pop,
+  pattern = "tot_working_pop\\.csv$",
+  full.names = TRUE
 )
-main_us_pilots_atr <- build_main_us_pilots_atr(main_us_pilots_any)
-tot_working_pop <- load_tot_working_population(paths)
-sum_stat_prop_pilots <- build_sum_stat_prop_pilots(main_us_pilots_atr, tot_working_pop)
+
+tot_working_pop <- read_csv(
+  csv_files,
+  id = "file",
+  show_col_types = FALSE,
+  col_types = cols(.default = col_guess())
+) |>
+  mutate(year = as.numeric(str_extract(file, "\\d{4}"))) |>
+  select(-file) |>
+  rename(state = statefips)
+
+sum_stat_prop_pilots <- main_us_pilots_atr |>
+  count(year, state, name = "n_atr_pilots") |>
+  left_join(tot_working_pop, by = c("year", "state")) |>
+  mutate(prop_atr_pilots = n_atr_pilots / tot_work_pop * 100)
 
 # Outputs ----
 
