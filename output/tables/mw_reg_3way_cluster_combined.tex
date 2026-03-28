@@ -1,0 +1,28 @@
+
+\begin{table}[htbp]
+   \caption{Moretti and Wilson (2017) Regression Specification Results, 3-way clustering: Balanced panel}
+   \bigskip
+   \centering
+   \small
+   \begin{tabular}{lccccc}
+      \toprule
+       & \multicolumn{5}{c}{lodds\_ratio}\\
+                                                & BLS airline mean & BLS airline median & SOI p90              & SOI p95       & SOI p99 \\   
+                                                & (1)              & (2)                & (3)                  & (4)           & (5)\\  
+      \midrule 
+      lnet\_tax\_diff                           & 6.744$^{***}$    & 7.296$^{***}$      & 0.6974               & 2.792         & 2.229$^{*}$\\   
+                                                & (2.112)          & (2.137)            & (2.370)              & (2.584)       & (1.234)\\   
+       \\
+      Observations                              & 6,259            & 6,259              & 6,259                & 6,259         & 6,259\\  
+      R$^2$                                     & 0.84948          & 0.84957            & 0.84885              & 0.84894       & 0.84903\\  
+      Within R$^2$                              & 0.00422          & 0.00484            & $4.9\times 10^{-5}$  & 0.00064       & 0.00123\\  
+       \\
+      year fixed effects                        & $\checkmark$     & $\checkmark$       & $\checkmark$         & $\checkmark$  & $\checkmark$\\   
+      origin\_state fixed effects               & $\checkmark$     & $\checkmark$       & $\checkmark$         & $\checkmark$  & $\checkmark$\\   
+      dest\_state fixed effects                 & $\checkmark$     & $\checkmark$       & $\checkmark$         & $\checkmark$  & $\checkmark$\\   
+      origin\_state-dest\_state fixed effects   & $\checkmark$     & $\checkmark$       & $\checkmark$         & $\checkmark$  & $\checkmark$\\   
+      \bottomrule
+   \end{tabular}
+\end{table}
+
+

@@ -24,6 +24,7 @@ required_packages <- c(
   "stargazer",
   "sf",
   "ggpattern",
+  "patchwork",
   "purrr",
   "usincometaxes",
   "tibble",
