@@ -10,18 +10,12 @@ data/derived/*
 !data/derived/.gitkeep
 !data/derived/aviationdb/
 !data/derived/faa/
+data/derived/aviationdb/*
+data/derived/faa/*
+!data/derived/aviationdb/.gitkeep
+!data/derived/faa/.gitkeep
 output/*
 !output/.gitkeep
-!output/figures/
-!output/figures/.gitkeep
-!output/tables/
-!output/tables/.gitkeep
-!output/aviationdb/
-!output/aviationdb/figures/
-!output/aviationdb/tables/
-!output/faa/
-!output/faa/figures/
-!output/faa/tables/
 literature/
 
 *.aux
