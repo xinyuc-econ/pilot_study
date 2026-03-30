@@ -41,4 +41,5 @@
 - Validate each migrated chunk against legacy outputs before replacing downstream steps.
 - Keep naming descriptive. Avoid temporary names like `m1` in clean code.
 - Keep plotting work out of cleaning and validation scripts; place it with analysis outputs.
-- For now, legacy-compatible cleaning depends on an FAA-rich intermediate dataset rather than the minimal source-agnostic ingest panel.
+- The production cleaning stage should use the canonical source-agnostic ingest panel.
+- FAA-rich intermediates are legacy/reference artifacts rather than the main production input.

@@ -8,7 +8,7 @@ source("code/00_setup/00_packages_paths.R")
 source("code/utils/ingest_helpers.R")
 
 # The canonical ingest output is source-agnostic and keeps only shared fields.
-ingest_source <- Sys.getenv("PILOT_INGEST_SOURCE", unset = "faa_flat")
+ingest_source <- Sys.getenv("PILOT_INGEST_SOURCE", unset = "aviationdb")
 year_subset <- Sys.getenv("PILOT_INGEST_YEARS", unset = "")
 output_path <- Sys.getenv(
   "PILOT_INGEST_OUTPUT",

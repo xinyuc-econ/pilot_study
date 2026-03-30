@@ -1,4 +1,4 @@
-# Purpose: validate that both ingest sources normalize to the same schema.
+# Purpose: validate that FAA and AviationDB normalize to the same schema and report overlap-year count differences.
 # Inputs: FAA flat files and AviationDB files for overlapping years
 # Outputs: console validation only
 
@@ -39,7 +39,36 @@ if (!identical(faa_columns, aviationdb_columns)) {
   )
 }
 
+# Overlap-Year Count Comparison ----
+
+overlap_counts <- bind_rows(
+  faa_inputs |>
+    mutate(source = "faa_flat") |>
+    rowwise() |>
+    mutate(
+      n_rows = nrow(build_pilot_ingest_dataset(paths, source = "faa_flat", years = year))
+    ) |>
+    ungroup() |>
+    select("year", "source", "n_rows"),
+  aviationdb_inputs |>
+    mutate(source = "aviationdb") |>
+    rowwise() |>
+    mutate(
+      n_rows = nrow(build_pilot_ingest_dataset(paths, source = "aviationdb", years = year))
+    ) |>
+    ungroup() |>
+    select("year", "source", "n_rows")
+) |>
+  filter(year %in% overlap_years) |>
+  tidyr::pivot_wider(names_from = "source", values_from = "n_rows") |>
+  mutate(
+    row_diff = aviationdb - faa_flat,
+    pct_diff = row_diff / faa_flat * 100
+  ) |>
+  arrange(year)
+
 # Reporting ----
 
 message("Ingest schema validation passed for overlapping year: ", overlap_years[1])
 message("Columns: ", paste(faa_columns, collapse = ", "))
+print(overlap_counts)

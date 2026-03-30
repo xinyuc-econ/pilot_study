@@ -8,7 +8,7 @@ source("code/00_setup/00_packages_paths.R")
 source("code/utils/ingest_helpers.R")
 
 # These env vars make it easy to inspect a specific source or year subset.
-ingest_source <- Sys.getenv("PILOT_INGEST_SOURCE", unset = "faa_flat")
+ingest_source <- Sys.getenv("PILOT_INGEST_SOURCE", unset = "aviationdb")
 year_subset <- Sys.getenv("PILOT_INGEST_YEARS", unset = "")
 
 # Input Discovery ----
