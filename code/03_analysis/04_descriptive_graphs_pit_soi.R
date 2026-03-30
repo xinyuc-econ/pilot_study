@@ -1,6 +1,6 @@
 # Purpose: reproduce legacy PIT summary outputs and maps for the SOI p95 taxpayer case.
-# Inputs: `data/derived/all_years_pit_soi_wide.csv`
-# Outputs: one summary table and three PIT map figures in `output/tables/` and `output/figures/`
+# Inputs: `data/derived/aviationdb/all_years_pit_soi_wide.csv`
+# Outputs: one summary table and three PIT map figures in `output/aviationdb/tables/` and `output/aviationdb/figures/`
 
 # Setup ----
 
@@ -8,23 +8,26 @@ source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
 pit <- read_csv(
-  file.path(paths$derived, "all_years_pit_soi_wide.csv"),
+  file.path(paths$derived_aviationdb, "all_years_pit_soi_wide.csv"),
   show_col_types = FALSE
 )
 
 state_crosswalk <- load_state_fips_crosswalk(paths) |>
   select("fips", "state")
 
-table_path <- file.path(paths$tables, "summary_stats_pit_soi_p95.tex")
-srate_map_path <- file.path(paths$figures, "srate_maps_soi_p95.png")
-astr_map_path <- file.path(paths$figures, "astr_maps_soi_p95.png")
-atr_map_path <- file.path(paths$figures, "atr_maps_soi_p95.png")
+dir.create(paths$tables_aviationdb, recursive = TRUE, showWarnings = FALSE)
+dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
+table_path <- file.path(paths$tables_aviationdb, "summary_stats_pit_soi_p95.tex")
+srate_map_path <- file.path(paths$figures_aviationdb, "srate_maps_soi_p95.png")
+astr_map_path <- file.path(paths$figures_aviationdb, "astr_maps_soi_p95.png")
+atr_map_path <- file.path(paths$figures_aviationdb, "atr_maps_soi_p95.png")
 
 # Derived Analysis Inputs ----
 
 pit_for_plot <- pit |>
   left_join(state_crosswalk, by = "fips") |>
-  filter(year >= 2009) |>
+  filter(year %in% analysis_years) |>
   select("year", "state", "srate_p95", "astr_p95", "atr_p95") |>
   mutate(
     astr_p95 = astr_p95 * 100,
@@ -62,7 +65,11 @@ srate_map <- plot_usmap(
   facet_wrap(~year) +
   labs(
     fill = "",
-    title = "Marginal state tax rate, 95th income percentile, 2009-2022"
+    title = sprintf(
+      "Marginal state tax rate, 95th income percentile, %s-%s",
+      min(analysis_years),
+      max(analysis_years)
+    )
   ) +
   theme(
     legend.position = c(0.6, 0.03),
@@ -83,7 +90,11 @@ astr_map <- plot_usmap(
   facet_wrap(~year) +
   labs(
     fill = "",
-    title = "Average state tax rate, 95th income percentile, 2009-2022"
+    title = sprintf(
+      "Average state tax rate, 95th income percentile, %s-%s",
+      min(analysis_years),
+      max(analysis_years)
+    )
   ) +
   theme(
     legend.position = c(0.6, 0.03),
@@ -104,7 +115,11 @@ atr_map <- plot_usmap(
   facet_wrap(~year) +
   labs(
     fill = "",
-    title = "Average tax rate, 95th income percentile, 2009-2022"
+    title = sprintf(
+      "Average tax rate, 95th income percentile, %s-%s",
+      min(analysis_years),
+      max(analysis_years)
+    )
   ) +
   theme(
     legend.position = c(0.55, 0.03),
@@ -117,4 +132,4 @@ ggsave(atr_map_path, plot = atr_map, width = 15, height = 10)
 
 # Reporting ----
 
-message("Wrote SOI PIT outputs to ", paths$figures, " and ", paths$tables)
+message("Wrote SOI PIT outputs to ", paths$figures_aviationdb, " and ", paths$tables_aviationdb)

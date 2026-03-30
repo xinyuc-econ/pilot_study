@@ -1,6 +1,6 @@
 # Purpose: build TAXSIM-ready input datasets for SOI and BLS robustness cases.
 # Inputs: SOI percentile thresholds, CPI series, BLS wage files, and IRS SOI state crosswalk
-# Outputs: split TAXSIM-ready CSVs under `data/derived/taxsim/soi/` and `data/derived/taxsim/bls/`
+# Outputs: split TAXSIM-ready CSVs under `data/derived/aviationdb/taxsim/soi/` and `data/derived/aviationdb/taxsim/bls/`
 
 # Setup ----
 
@@ -59,9 +59,9 @@ write_taxsim_case_outputs <- function(data, output_dir) {
   )
 }
 
-dir.create(paths$taxsim, recursive = TRUE, showWarnings = FALSE)
-dir.create(file.path(paths$taxsim, "soi"), recursive = TRUE, showWarnings = FALSE)
-dir.create(file.path(paths$taxsim, "bls"), recursive = TRUE, showWarnings = FALSE)
+dir.create(paths$taxsim_aviationdb, recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path(paths$taxsim_aviationdb, "soi"), recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path(paths$taxsim_aviationdb, "bls"), recursive = TRUE, showWarnings = FALSE)
 
 # Input Loading ----
 
@@ -95,41 +95,58 @@ soi_thresholds <- soi |>
   ) |>
   select("year", starts_with("nom_"))
 
-bls_files <- list.files(
-  paths$raw_bls,
-  pattern = "^national_M[0-9]{4}_dl\\.xlsx?$",
-  recursive = TRUE,
-  full.names = TRUE
-)
+processed_bls_path <- file.path(paths$raw_bls, "processed_bls.csv")
 
-bls_wage_files <- tibble(path = bls_files) |>
-  mutate(year = as.integer(str_extract(basename(path), "[0-9]{4}"))) |>
-  filter(year %in% taxsim_years) |>
-  arrange(year)
-
-if (nrow(bls_wage_files) == 0) {
-  stop("No raw BLS wage files were found for the requested TAXSIM years.", call. = FALSE)
-}
-
-bls_wages <- map_dfr(bls_wage_files$path, function(path) {
-  read_excel(path) |>
+if (file.exists(processed_bls_path)) {
+  bls_wages <- read_csv(
+    processed_bls_path,
+    show_col_types = FALSE
+  ) |>
     clean_names() |>
-    select(
-      any_of(c(
-        "occ_code", "occ_title", "a_mean", "a_pct10", "a_pct25",
-        "a_median", "a_pct75", "a_pct90"
-      ))
-    ) |>
-    filter(occ_code %in% c("53-2010", "53-2011", "53-2012")) |>
-    mutate(year = as.integer(str_extract(basename(path), "[0-9]{4}"))) |>
-    relocate("year")
-}) |>
-  mutate(
-    across(
-      starts_with("a_"),
-      ~ as.numeric(na_if(as.character(.x), "#"))
+    filter(year %in% taxsim_years, occ_code %in% c("53-2011", "53-2012")) |>
+    mutate(
+      across(
+        starts_with("a_"),
+        ~ as.numeric(na_if(as.character(.x), "#"))
+      )
     )
+} else {
+  bls_files <- list.files(
+    paths$raw_bls,
+    pattern = "national.*[0-9]{4}.*_dl\\.xlsx?$",
+    recursive = TRUE,
+    full.names = TRUE
   )
+
+  bls_wage_files <- tibble(path = bls_files) |>
+    mutate(year = as.integer(str_extract(basename(path), "[0-9]{4}"))) |>
+    filter(year %in% taxsim_years) |>
+    arrange(year)
+
+  if (nrow(bls_wage_files) == 0) {
+    stop("No raw BLS wage files were found for the requested TAXSIM years.", call. = FALSE)
+  }
+
+  bls_wages <- map_dfr(bls_wage_files$path, function(path) {
+    read_excel(path) |>
+      clean_names() |>
+      select(
+        any_of(c(
+          "occ_code", "occ_title", "a_mean", "a_pct10", "a_pct25",
+          "a_median", "a_pct75", "a_pct90"
+        ))
+      ) |>
+      filter(occ_code %in% c("53-2011", "53-2012")) |>
+      mutate(year = as.integer(str_extract(basename(path), "[0-9]{4}"))) |>
+      relocate("year")
+  }) |>
+    mutate(
+      across(
+        starts_with("a_"),
+        ~ as.numeric(na_if(as.character(.x), "#"))
+      )
+    )
+}
 
 # 1. TAXSIM Inputs ----
 
@@ -151,7 +168,7 @@ soi_taxsim_inputs <- soi_thresholds |>
 
 write_taxsim_case_outputs(
   data = soi_taxsim_inputs,
-  output_dir = file.path(paths$taxsim, "soi")
+  output_dir = file.path(paths$taxsim_aviationdb, "soi")
 )
 
 ## 1.2 BLS Pilot Wage Inputs ----
@@ -181,12 +198,12 @@ bls_taxsim_inputs <- bls_wages |>
 
 write_taxsim_case_outputs(
   data = bls_taxsim_inputs,
-  output_dir = file.path(paths$taxsim, "bls")
+  output_dir = file.path(paths$taxsim_aviationdb, "bls")
 )
 
 # Reporting ----
 
-message("Wrote SOI TAXSIM inputs to ", file.path(paths$taxsim, "soi"))
-message("Wrote BLS TAXSIM inputs to ", file.path(paths$taxsim, "bls"))
+message("Wrote SOI TAXSIM inputs to ", file.path(paths$taxsim_aviationdb, "soi"))
+message("Wrote BLS TAXSIM inputs to ", file.path(paths$taxsim_aviationdb, "bls"))
 message("SOI rows: ", nrow(soi_taxsim_inputs))
 message("BLS rows: ", nrow(bls_taxsim_inputs))

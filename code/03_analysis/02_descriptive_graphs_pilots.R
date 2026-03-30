@@ -1,25 +1,30 @@
 # Purpose: reproduce legacy descriptive state graphs and summary statistics for ATR pilots.
-# Inputs: `data/derived/sum_stat_prop_atr_pilots.csv`
-# Outputs: six state-level figure files in `output/figures/` and one LaTeX table in `output/tables/`
+# Inputs: `data/derived/aviationdb/sum_stat_prop_atr_pilots.csv`
+# Outputs: six state-level figure files in `output/aviationdb/figures/` and one LaTeX table in `output/aviationdb/tables/`
 
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
 
 state_prop_data <- read_csv(
-  file.path(paths$derived, "sum_stat_prop_atr_pilots.csv"),
+  file.path(paths$derived_aviationdb, "sum_stat_prop_atr_pilots.csv"),
   show_col_types = FALSE
 )
 
 zero_states <- c("TX", "FL", "NV", "WA", "WY", "SD", "TN", "AK", "NH")
+base_year <- min(analysis_years)
+latest_year <- max(analysis_years)
 
-table_path <- file.path(paths$tables, "summary_stats_atr_pilots.tex")
-all_years_map_path <- file.path(paths$figures, "atr_pilot_share_map_by_year.png")
-state_share_map_path <- file.path(paths$figures, "atr_pilot_share_map_2024.png")
-share_change_map_path <- file.path(paths$figures, "atr_pilot_share_change_map_2009_2024.png")
-total_share_map_path <- file.path(paths$figures, "atr_pilot_share_of_total_atr_map_2024.png")
-residual_map_path <- file.path(paths$figures, "atr_pilot_share_residual_map_2024.png")
-residual_zero_tax_map_path <- file.path(paths$figures, "atr_pilot_share_residual_map_zero_tax_2024.png")
+dir.create(paths$tables_aviationdb, recursive = TRUE, showWarnings = FALSE)
+dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
+table_path <- file.path(paths$tables_aviationdb, "summary_stats_atr_pilots.tex")
+all_years_map_path <- file.path(paths$figures_aviationdb, "atr_pilot_share_map_by_year.png")
+state_share_map_path <- file.path(paths$figures_aviationdb, sprintf("atr_pilot_share_map_%s.png", latest_year))
+share_change_map_path <- file.path(paths$figures_aviationdb, sprintf("atr_pilot_share_change_map_%s_%s.png", base_year, latest_year))
+total_share_map_path <- file.path(paths$figures_aviationdb, sprintf("atr_pilot_share_of_total_atr_map_%s.png", latest_year))
+residual_map_path <- file.path(paths$figures_aviationdb, sprintf("atr_pilot_share_residual_map_%s.png", latest_year))
+residual_zero_tax_map_path <- file.path(paths$figures_aviationdb, sprintf("atr_pilot_share_residual_map_zero_tax_%s.png", latest_year))
 
 # Derived Analysis Inputs ----
 
@@ -35,11 +40,11 @@ state_prop_binned <- state_prop_data |>
     prop_bins = cut(prop_atr_pilots, breaks = c(0.01, 0.05, 0.1, 0.2, 0.55))
   )
 
-state_prop_binned_2024 <- state_prop_binned |>
-  filter(year == 2024)
+state_prop_binned_latest <- state_prop_binned |>
+  filter(year == latest_year)
 
 state_prop_change <- state_prop_data |>
-  filter(year %in% c(2009, 2024)) |>
+  filter(year %in% c(base_year, latest_year)) |>
   arrange(state, year) |>
   group_by(state) |>
   mutate(
@@ -63,17 +68,17 @@ state_total_share <- state_prop_data |>
     prop_bins = cut(prop_atr_pilots_ofall, breaks = c(0, 1, 2, 3, 10, 13))
   )
 
-state_total_share_2024 <- state_total_share |>
-  filter(year == 2024)
+state_total_share_latest <- state_total_share |>
+  filter(year == latest_year)
 
-data_2024 <- state_total_share |>
-  filter(year == 2024)
+latest_year_data <- state_total_share |>
+  filter(year == latest_year)
 
-residual_model <- lm(prop_atr_pilots_ofall ~ tot_work_pop, data = data_2024)
+residual_model <- lm(prop_atr_pilots_ofall ~ tot_work_pop, data = latest_year_data)
 
-residual_data <- data_2024 |>
+residual_data <- latest_year_data |>
   mutate(
-    pred = predict(residual_model, newdata = data_2024),
+    pred = predict(residual_model, newdata = latest_year_data),
     resid = prop_atr_pilots_ofall - pred,
     resid_binned = cut(resid, c(-4, -1, 0, 1, 4, 7))
   )
@@ -122,17 +127,17 @@ all_years_map <- plot_usmap(
 
 ggsave(all_years_map_path, plot = all_years_map, width = 15, height = 10)
 
-## 2.2 ATR Pilot Share by State in 2024 ----
+## 2.2 ATR Pilot Share by State in Latest Year ----
 
-state_share_map_2024 <- plot_usmap(
-  data = state_prop_binned_2024,
+state_share_map_latest <- plot_usmap(
+  data = state_prop_binned_latest,
   regions = "states",
   values = "prop_bins"
 ) +
   scale_fill_viridis_d(alpha = 0.9, direction = -1, name = "%") +
   labs(
     fill = "",
-    title = "Share of Pilots Relative to State Total Working Population, 2024"
+    title = sprintf("Share of Pilots Relative to State Total Working Population, %s", latest_year)
   ) +
   theme(
     legend.position = c(0.9, 0.03),
@@ -144,9 +149,9 @@ state_share_map_2024 <- plot_usmap(
     legend.box.background = element_rect(fill = "transparent")
   )
 
-ggsave(state_share_map_path, plot = state_share_map_2024, width = 16, height = 10)
+ggsave(state_share_map_path, plot = state_share_map_latest, width = 16, height = 10)
 
-## 2.3 Change in ATR Pilot Share, 2009-2024 ----
+## 2.3 Change in ATR Pilot Share, Base Year to Latest Year ----
 
 share_change_map <- plot_usmap(
   data = state_prop_change,
@@ -156,7 +161,11 @@ share_change_map <- plot_usmap(
   scale_fill_viridis_d(alpha = 0.9, direction = -1) +
   labs(
     fill = "",
-    title = "Changes in proportion of ATR relative to total working population, 2009-2024"
+    title = sprintf(
+      "Changes in proportion of ATR relative to total working population, %s-%s",
+      base_year,
+      latest_year
+    )
   ) +
   theme(
     legend.position = c(0.9, 0.03),
@@ -169,17 +178,17 @@ share_change_map <- plot_usmap(
 
 ggsave(share_change_map_path, plot = share_change_map, width = 16, height = 10)
 
-## 2.4 ATR Share of Total ATR Pilots in 2024 ----
+## 2.4 ATR Share of Total ATR Pilots in Latest Year ----
 
-total_share_map_2024 <- plot_usmap(
-  data = state_total_share_2024,
+total_share_map_latest <- plot_usmap(
+  data = state_total_share_latest,
   regions = "states",
   values = "prop_bins"
 ) +
   scale_fill_viridis_d(alpha = 0.9, direction = -1, name = "%") +
   labs(
     fill = "",
-    title = "Share of Pilots Relative to Total # of Pilots, 2024"
+    title = sprintf("Share of Pilots Relative to Total # of Pilots, %s", latest_year)
   ) +
   theme(
     legend.position = c(0.9, 0.03),
@@ -191,14 +200,14 @@ total_share_map_2024 <- plot_usmap(
     legend.box.background = element_rect(fill = "transparent")
   )
 
-ggsave(total_share_map_path, plot = total_share_map_2024, width = 16, height = 10)
+ggsave(total_share_map_path, plot = total_share_map_latest, width = 16, height = 10)
 
-## 2.5 Residual ATR Pilot Share Map in 2024 ----
+## 2.5 Residual ATR Pilot Share Map in Latest Year ----
 
 residual_map <- ggplot(residual_state_map) +
   geom_sf(aes(fill = resid_binned), color = "white", alpha = 0.9) +
   scale_fill_viridis_d(name = "Residual Bin", direction = -1) +
-  labs(title = "Residuals from Regression of Pilot Share on State Total Working Population (2024)") +
+  labs(title = sprintf("Residuals from Regression of Pilot Share on State Total Working Population (%s)", latest_year)) +
   theme_minimal() +
   theme(
     axis.text = element_blank(),
@@ -212,7 +221,7 @@ residual_map <- ggplot(residual_state_map) +
 
 ggsave(residual_map_path, plot = residual_map, width = 13, height = 8)
 
-## 2.6 Residual ATR Pilot Share Map with Zero-Tax Overlay in 2024 ----
+## 2.6 Residual ATR Pilot Share Map with Zero-Tax Overlay in Latest Year ----
 residual_zero_tax_map <- ggplot(residual_state_map) +
   geom_sf(aes(fill = resid_binned), color = "white", alpha = 0.9) +
   scale_fill_viridis_d(name = "Residual Bin", direction = -1) +
@@ -226,7 +235,7 @@ residual_zero_tax_map <- ggplot(residual_state_map) +
     pattern_angle = 45
   ) +
   scale_pattern_manual(name = "Zero PIT", values = c("TRUE" = "crosshatch")) +
-  labs(title = "Residuals from Regression of Pilot Share on State Total Working Population (2024)") +
+  labs(title = sprintf("Residuals from Regression of Pilot Share on State Total Working Population (%s)", latest_year)) +
   theme_minimal() +
   theme(
     axis.text = element_blank(),
@@ -242,5 +251,5 @@ ggsave(residual_zero_tax_map_path, plot = residual_zero_tax_map, width = 13, hei
 
 # Reporting ----
 
-message("Wrote descriptive graphs to ", paths$figures)
+message("Wrote descriptive graphs to ", paths$figures_aviationdb)
 message("Wrote summary table to ", table_path)

@@ -27,7 +27,6 @@ required_packages <- c(
   "ggpattern",
   "patchwork",
   "purrr",
-  "usincometaxes",
   "tibble",
   "testthat",
   "xtable",
@@ -81,11 +80,14 @@ paths <- list(
   raw_tot_working_pop = file.path(raw_data_root, "raw", "tot_working_pop_weights"),
   xwalks = file.path(raw_data_root, "xwalks"),
   intermediate = project_path("data", "intermediate"),
-  derived = project_path("data", "derived"),
-  taxsim = project_path("data", "derived", "taxsim"),
-  taxsim_output = project_path("data", "derived", "taxsim_output"),
-  figures = project_path("output", "figures"),
-  tables = project_path("output", "tables")
+  derived_aviationdb = project_path("data", "derived", "aviationdb"),
+  taxsim_aviationdb = project_path("data", "derived", "aviationdb", "taxsim"),
+  taxsim_output_aviationdb = project_path("data", "derived", "aviationdb", "taxsim_output"),
+  derived_faa = project_path("data", "derived", "faa"),
+  figures_aviationdb = project_path("output", "aviationdb", "figures"),
+  tables_aviationdb = project_path("output", "aviationdb", "tables"),
+  figures_faa = project_path("output", "faa", "figures"),
+  tables_faa = project_path("output", "faa", "tables")
 )
 
 # Path Validation ----
@@ -119,6 +121,5 @@ excluded_territories <- c(
   "PR", "VI", "AA", "AE", "GU", "AP", "AS", "MP", "FM", "MH", "PW"
 )
 
-# This might need to be changed
-sampled_years <- c(2009, 2010, 2011, 2014, 2015, 2016, 2017, 2019, 2022, 2024, 2025)
-taxsim_years <- sampled_years[sampled_years >= 2009 & sampled_years <= 2022]
+analysis_years <- 2001:2022
+taxsim_years <- analysis_years

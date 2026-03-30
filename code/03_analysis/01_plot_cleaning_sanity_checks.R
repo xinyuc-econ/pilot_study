@@ -1,30 +1,38 @@
 # Purpose: recreate the two saved legacy sanity-check plots from derived datasets.
-# Inputs: `data/derived/main_us_pilots_any.csv` and `data/derived/main_us_pilots_atr.csv`
-# Outputs: `output/figures/num_composition_pilots_by_year.png` and `output/figures/num_atr_pilots_by_year.png`
+# Inputs: `data/derived/aviationdb/main_us_pilots_any.csv` and `data/derived/aviationdb/main_us_pilots_atr.csv`
+# Outputs: `output/aviationdb/figures/num_composition_pilots_by_year.png` and `output/aviationdb/figures/num_atr_pilots_by_year.png`
 
 # Setup and Inputs ----
 
 source("code/00_setup/00_packages_paths.R")
 
 main_us_pilots_any <- read_csv(
-  file.path(paths$derived, "main_us_pilots_any.csv"),
+  file.path(paths$derived_aviationdb, "main_us_pilots_any.csv"),
   show_col_types = FALSE,
   col_types = cols(.default = col_character())
 ) |>
   mutate(year = as.integer(year))
 
 main_us_pilots_atr <- read_csv(
-  file.path(paths$derived, "main_us_pilots_atr.csv"),
+  file.path(paths$derived_aviationdb, "main_us_pilots_atr.csv"),
   show_col_types = FALSE,
   col_types = cols(.default = col_character())
 ) |>
   mutate(year = as.integer(year))
+
+pilot_level_order <- c("ATR", "Commercial", "Other")
+pilot_level_labels <- c(
+  Other = "Other",
+  Commercial = "Commercial Pilot",
+  ATR = "Airline Transport Pilot"
+)
 
 # 1. Figures ----
 
 ## 1.1 Composition of Pilot Certification Holders ----
 
 composition_plot <- main_us_pilots_any |>
+  mutate(level_collapsed = factor(level_collapsed, levels = pilot_level_order)) |>
   ggplot(aes(x = as.factor(year), fill = level_collapsed)) +
   geom_bar() +
   scale_y_continuous(
@@ -33,11 +41,18 @@ composition_plot <- main_us_pilots_any |>
     breaks = seq(0, 550000, 50000),
     limits = c(0, 550000)
   ) +
-  scale_x_discrete(name = NULL) +
+  scale_x_discrete(
+    name = NULL,
+    guide = guide_axis(angle = 45)) +
   scale_fill_manual(
-    values = viridisLite::viridis(3),
-    labels = c("Airline Transport Pilot", "Commercial Pilot", "Other"),
-    name = "Pilot Certification Level"
+    values = c(
+      ATR = "#440154FF",
+      Commercial = "#21908CFF",
+      Other = "#FDE725FF"
+    ),
+    breaks = rev(pilot_level_order),
+    labels = pilot_level_labels[rev(pilot_level_order)],
+    name = NULL
   ) +
   theme_bw() +
   theme(
@@ -45,12 +60,15 @@ composition_plot <- main_us_pilots_any |>
     axis.text.y = element_text(size = 15),
     plot.title = element_text(size = 20),
     legend.text = element_text(size = 15),
-    legend.title = element_text(size = 15)
+    legend.title = element_text(size = 15),
+    legend.position = "bottom"
   ) +
-  labs(title = "Number and Composition of Pilot Certification Holders by Year")
+  labs(title = "Number and Composition of Pilot Certification Holders by Year") 
+
+dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
 
 ggsave(
-  filename = file.path(paths$figures, "num_composition_pilots_by_year.png"),
+  filename = file.path(paths$figures_aviationdb, "num_composition_pilots_by_year.png"),
   plot = composition_plot,
   width = 10,
   height = 7
@@ -64,10 +82,12 @@ atr_plot <- main_us_pilots_atr |>
   scale_y_continuous(
     name = NULL,
     labels = scales::label_number(scale = 1 / 1000, suffix = "K"),
-    breaks = seq(0, 120000, 10000),
-    limits = c(0, 120000)
+    breaks = seq(0, 120000, 10000)
   ) +
-  scale_x_discrete(name = NULL) +
+  scale_x_discrete(
+    name = NULL,
+    guide = guide_axis(angle = 45)
+    ) +
   theme_bw() +
   theme(
     axis.text.x = element_text(size = 15),
@@ -79,7 +99,7 @@ atr_plot <- main_us_pilots_atr |>
   labs(title = "Number of Airline Transport Pilots by Year")
 
 ggsave(
-  filename = file.path(paths$figures, "num_atr_pilots_by_year.png"),
+  filename = file.path(paths$figures_aviationdb, "num_atr_pilots_by_year.png"),
   plot = atr_plot,
   width = 9,
   height = 7
@@ -87,4 +107,4 @@ ggsave(
 
 # Reporting ----
 
-message("Saved plots to ", paths$figures)
+message("Saved plots to ", paths$figures_aviationdb)

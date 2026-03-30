@@ -1,18 +1,20 @@
 # Purpose: generate legacy-style binscatter figures for SOI and BLS pilot-tax measures.
-# Inputs: `data/derived/pilot_tax_analysis_soi.csv` and `data/derived/pilot_tax_analysis_bls.csv`
-# Outputs: binscatter figures in `output/figures/`
+# Inputs: `data/derived/aviationdb/pilot_tax_analysis_soi.csv` and `data/derived/aviationdb/pilot_tax_analysis_bls.csv`
+# Outputs: binscatter figures in `output/aviationdb/figures/`
 
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
 
+dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
 pilot_tax_soi <- read_csv(
-  file.path(paths$derived, "pilot_tax_analysis_soi.csv"),
+  file.path(paths$derived_aviationdb, "pilot_tax_analysis_soi.csv"),
   show_col_types = FALSE
 )
 
 pilot_tax_bls <- read_csv(
-  file.path(paths$derived, "pilot_tax_analysis_bls.csv"),
+  file.path(paths$derived_aviationdb, "pilot_tax_analysis_bls.csv"),
   show_col_types = FALSE
 )
 
@@ -196,7 +198,7 @@ save_case_binscatters <- function(
   suppressWarnings(
     ggsave(
       file.path(
-        paths$figures,
+        paths$figures_aviationdb,
         build_binscatter_output_filename(
           method = method,
           tax_measure = "astr",
@@ -214,7 +216,7 @@ save_case_binscatters <- function(
   suppressWarnings(
     ggsave(
       file.path(
-        paths$figures,
+        paths$figures_aviationdb,
         build_binscatter_output_filename(
           method = method,
           tax_measure = "atr",
@@ -314,4 +316,4 @@ pwalk(
 
 # Reporting ----
 
-message("Wrote pilot-tax binscatter figures to ", paths$figures)
+message("Wrote pilot-tax binscatter figures to ", paths$figures_aviationdb)

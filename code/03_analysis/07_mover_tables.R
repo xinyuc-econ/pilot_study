@@ -1,6 +1,6 @@
 # Purpose: reproduce legacy mover summary and pilot migration flow tables from the ATR mover panel.
-# Inputs: `data/derived/main_us_pilots_atr_mover_panel.csv` and `data/derived/sum_stat_prop_atr_pilots.csv`
-# Outputs: four LaTeX tables in `output/tables/`
+# Inputs: `data/derived/aviationdb/main_us_pilots_atr_mover_panel.csv` and `data/derived/aviationdb/sum_stat_prop_atr_pilots.csv`
+# Outputs: four LaTeX tables in `output/aviationdb/tables/`
 
 # Setup ----
 
@@ -14,21 +14,23 @@ build_migration_flow_table <- function(data) {
 }
 
 mover_panel <- read_csv(
-  file.path(paths$derived, "main_us_pilots_atr_mover_panel.csv"),
+  file.path(paths$derived_aviationdb, "main_us_pilots_atr_mover_panel.csv"),
   show_col_types = FALSE
 ) |>
   mutate(year = as.integer(year))
 
 sum_stat_prop_atr_pilots <- read_csv(
-  file.path(paths$derived, "sum_stat_prop_atr_pilots.csv"),
+  file.path(paths$derived_aviationdb, "sum_stat_prop_atr_pilots.csv"),
   show_col_types = FALSE
 ) |>
   mutate(year = as.integer(year))
 
-prop_moved_table_path <- file.path(paths$tables, "prop_moved_by_year.tex")
-all_states_flow_table_path <- file.path(paths$tables, "total_outflow_observed_all_states.tex")
-top10_flow_table_path <- file.path(paths$tables, "total_outflow_observed_top10.tex")
-annual_top10_flow_table_path <- file.path(paths$tables, "annual_outflow_observed_top10.tex")
+dir.create(paths$tables_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
+prop_moved_table_path <- file.path(paths$tables_aviationdb, "prop_moved_by_year.tex")
+all_states_flow_table_path <- file.path(paths$tables_aviationdb, "total_outflow_observed_all_states.tex")
+top10_flow_table_path <- file.path(paths$tables_aviationdb, "total_outflow_observed_top10.tex")
+annual_top10_flow_table_path <- file.path(paths$tables_aviationdb, "annual_outflow_observed_top10.tex")
 
 # Derived Analysis Inputs ----
 
@@ -41,22 +43,10 @@ flow_panel <- mover_panel |>
   ) |>
   relocate("lag_year", "time_period_yrs", .after = "year") |>
   ungroup() |>
-  filter(!is.na(lag_year))
-
-period_month_map <- tribble(
-  ~period_key,   ~time_period,            ~months_between,
-  "2009-2010", "11/2009 - 05/2010",  6,
-  "2010-2011", "05/2010 - 09/2011", 16,
-  "2011-2014", "09/2011 - 09/2014", 36,
-  "2014-2015", "09/2014 - 09/2015", 12,
-  "2015-2016", "09/2015 - 11/2016", 14,
-  "2016-2017", "11/2016 - 09/2017", 10,
-  "2017-2019", "06/2017 - 06/2019", 24,
-  "2019-2022", "06/2019 - 10/2022", 40,
-  "2022-2024", "10/2022 - 09/2024", 23
-)
+  filter(!is.na(lag_year), time_period_yrs == 1L)
 
 prop_moved_by_period <- mover_panel |>
+  filter(is_adjacent_year) |>
   group_by(year) |>
   summarise(
     n_pilots = n(),
@@ -66,22 +56,20 @@ prop_moved_by_period <- mover_panel |>
   ) |>
   mutate(
     lag_year = lag(year),
-    period_key = paste(lag_year, year, sep = "-")
+    time_period = paste(lag_year, year, sep = "-")
   ) |>
   filter(!is.na(lag_year)) |>
-  left_join(period_month_map, by = "period_key") |>
-  mutate(monthly_prop_moved = prop_moved / months_between) |>
   select(
     "time_period",
     "n_pilots",
     "n_moved",
-    "monthly_prop_moved"
+    "prop_moved"
   ) |>
   rename(
     `Time period` = "time_period",
     `# of pilots` = "n_pilots",
     `# of movers` = "n_moved",
-    `Ave. monthly % moved` = "monthly_prop_moved"
+    `% moved` = "prop_moved"
   ) |>
   as.data.frame()
 
@@ -100,8 +88,7 @@ top10_flow_panel <- flow_panel |>
 top10_flow_table <- build_migration_flow_table(top10_flow_panel)
 
 annual_top10_flow_table <- top10_flow_panel |>
-  filter(time_period_yrs == 1) |>
-  build_migration_flow_table() / (2017 - 2014 + 2011 - 2009)
+  build_migration_flow_table() / n_distinct(top10_flow_panel$year)
 
 # 1. Tables ----
 
@@ -123,7 +110,7 @@ print(
 print(
   xtable(
     all_states_flow_table,
-    caption = "Total number of moves of pilots observed, 2009-2024"
+    caption = sprintf("Total number of moves of pilots observed, %s-%s", min(analysis_years), max(analysis_years))
   ),
   file = all_states_flow_table_path
 )
@@ -133,7 +120,7 @@ print(
 print(
   xtable(
     top10_flow_table,
-    caption = "Total observed migration flows of pilots, top 10 states, 2009-2024"
+    caption = sprintf("Total observed migration flows of pilots, top 10 states, %s-%s", min(analysis_years), max(analysis_years))
   ),
   file = top10_flow_table_path
 )
@@ -143,7 +130,7 @@ print(
 print(
   xtable(
     annual_top10_flow_table,
-    caption = "Average annual migration flow of pilots, top 10 states, 2009-2011 and 2014-2017"
+    caption = sprintf("Average annual migration flow of pilots, top 10 states, %s-%s", min(analysis_years), max(analysis_years))
   ),
   file = annual_top10_flow_table_path
 )
@@ -151,4 +138,4 @@ print(
 # Reporting ----
 
 message("Wrote mover summary table to ", prop_moved_table_path)
-message("Wrote migration flow tables to ", paths$tables)
+message("Wrote migration flow tables to ", paths$tables_aviationdb)

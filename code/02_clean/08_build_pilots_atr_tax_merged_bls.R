@@ -1,6 +1,6 @@
 # Purpose: build pilot-level ATR mover datasets merged with BLS and SOI tax variables.
-# Inputs: `data/derived/main_us_pilots_atr_mover_panel.csv`, `data/derived/all_years_pit_bls.csv`, and `data/derived/all_years_pit_soi.csv`
-# Outputs: BLS airline mean/median and SOI p90/p95/p99 pilot-tax merged datasets in `data/derived/`
+# Inputs: `data/derived/aviationdb/main_us_pilots_atr_mover_panel.csv`, `data/derived/aviationdb/all_years_pit_bls.csv`, and `data/derived/aviationdb/all_years_pit_soi.csv`
+# Outputs: BLS airline mean/median and SOI p90/p95/p99 pilot-tax merged datasets in `data/derived/aviationdb/`
 
 # Setup ----
 
@@ -52,19 +52,19 @@ add_pilot_type <- function(data, pilot_type) {
 # Inputs ----
 
 mover_panel <- read_csv(
-  file.path(paths$derived, "main_us_pilots_atr_mover_panel.csv"),
+  file.path(paths$derived_aviationdb, "main_us_pilots_atr_mover_panel.csv"),
   show_col_types = FALSE
 ) |>
   mutate(year = as.integer(year))
 
 pit_bls <- read_csv(
-  file.path(paths$derived, "all_years_pit_bls.csv"),
+  file.path(paths$derived_aviationdb, "all_years_pit_bls.csv"),
   show_col_types = FALSE
 ) |>
   mutate(year = as.integer(year))
 
 pit_soi <- read_csv(
-  file.path(paths$derived, "all_years_pit_soi.csv"),
+  file.path(paths$derived_aviationdb, "all_years_pit_soi.csv"),
   show_col_types = FALSE
 ) |>
   mutate(year = as.integer(year))
@@ -74,23 +74,23 @@ state_crosswalk <- load_state_fips_crosswalk(paths)
 # Derived Datasets ----
 
 BLS_airline_mean <- pit_bls |>
-  filter(pilot_type == "airline", percentile == "mean", year <= 2022) |>
+  filter(pilot_type == "airline", percentile == "mean", year %in% analysis_years) |>
   select("year", "fips", "atr")
 
 BLS_airline_median <- pit_bls |>
-  filter(pilot_type == "airline", percentile == "median", year <= 2022) |>
+  filter(pilot_type == "airline", percentile == "median", year %in% analysis_years) |>
   select("year", "fips", "atr")
 
 SOI_p90 <- pit_soi |>
-  filter(percentile == "p90", year <= 2022) |>
+  filter(percentile == "p90", year %in% analysis_years) |>
   select("year", "fips", "atr")
 
 SOI_p95 <- pit_soi |>
-  filter(percentile == "p95", year <= 2022) |>
+  filter(percentile == "p95", year %in% analysis_years) |>
   select("year", "fips", "atr")
 
 SOI_p99 <- pit_soi |>
-  filter(percentile == "p99", year <= 2022) |>
+  filter(percentile == "p99", year %in% analysis_years) |>
   select("year", "fips", "atr")
 
 pilots_atr_tax_merged_bls_airline_mean <- build_pilot_tax_case(
@@ -122,11 +122,13 @@ pilots_atr_tax_merged_soi_p99 <- build_pilot_tax_case(
 
 # Outputs ----
 
-mean_output_path <- file.path(paths$derived, "pilots_atr_tax_merged_bls_airline_mean.csv")
-median_output_path <- file.path(paths$derived, "pilots_atr_tax_merged_bls_airline_median.csv")
-soi_p90_output_path <- file.path(paths$derived, "pilots_atr_tax_merged_soi_p90.csv")
-soi_p95_output_path <- file.path(paths$derived, "pilots_atr_tax_merged_soi_p95.csv")
-soi_p99_output_path <- file.path(paths$derived, "pilots_atr_tax_merged_soi_p99.csv")
+dir.create(paths$derived_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
+mean_output_path <- file.path(paths$derived_aviationdb, "pilots_atr_tax_merged_bls_airline_mean.csv")
+median_output_path <- file.path(paths$derived_aviationdb, "pilots_atr_tax_merged_bls_airline_median.csv")
+soi_p90_output_path <- file.path(paths$derived_aviationdb, "pilots_atr_tax_merged_soi_p90.csv")
+soi_p95_output_path <- file.path(paths$derived_aviationdb, "pilots_atr_tax_merged_soi_p95.csv")
+soi_p99_output_path <- file.path(paths$derived_aviationdb, "pilots_atr_tax_merged_soi_p99.csv")
 
 write_csv(pilots_atr_tax_merged_bls_airline_mean, mean_output_path)
 write_csv(pilots_atr_tax_merged_bls_airline_median, median_output_path)

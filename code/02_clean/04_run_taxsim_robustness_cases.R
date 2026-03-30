@@ -1,12 +1,18 @@
 # Purpose: run all generated TAXSIM robustness-case inputs through the R TAXSIM interface.
-# Inputs: split case files under `data/derived/taxsim/`
-# Outputs: one TAXSIM output CSV per case under `data/derived/taxsim_output/`
+# Inputs: split case files under `data/derived/aviationdb/taxsim/`
+# Outputs: one TAXSIM output CSV per case under `data/derived/aviationdb/taxsim_output/`
 
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
 
-dir.create(paths$taxsim_output, recursive = TRUE, showWarnings = FALSE)
+if (!requireNamespace("usincometaxes", quietly = TRUE)) {
+  stop("The `usincometaxes` package is required to run TAXSIM robustness cases.", call. = FALSE)
+}
+
+suppressPackageStartupMessages(library(usincometaxes))
+
+dir.create(paths$taxsim_output_aviationdb, recursive = TRUE, showWarnings = FALSE)
 
 return_all_information <- tolower(Sys.getenv("TAXSIM_RETURN_ALL_INFORMATION", unset = "true")) == "true"
 
@@ -14,7 +20,7 @@ return_all_information <- tolower(Sys.getenv("TAXSIM_RETURN_ALL_INFORMATION", un
 
 taxsim_case_files <- tibble(
   path = list.files(
-    paths$taxsim,
+    paths$taxsim_aviationdb,
     pattern = "^taxsim_input_.*\\.csv$",
     recursive = TRUE,
     full.names = TRUE
@@ -42,7 +48,7 @@ taxsim_case_files <- tibble(
   arrange(method, occ_code, percentile)
 
 if (nrow(taxsim_case_files) == 0) {
-  stop("No TAXSIM input case files were found under data/derived/taxsim.", call. = FALSE)
+  stop("No TAXSIM input case files were found under data/derived/aviationdb/taxsim.", call. = FALSE)
 }
 
 # 1. TAXSIM Outputs ----
@@ -76,7 +82,7 @@ output_paths <- map_chr(
       left_join(tax_results, by = "taxsimid")
 
     output_path <- file.path(
-      paths$taxsim_output,
+      paths$taxsim_output_aviationdb,
       sub("^taxsim_input_", "taxsim_output_", basename(path))
     )
 
@@ -88,4 +94,4 @@ output_paths <- map_chr(
 # Reporting ----
 
 message("Ran ", length(output_paths), " TAXSIM robustness cases.")
-message("Wrote TAXSIM outputs to ", paths$taxsim_output)
+message("Wrote TAXSIM outputs to ", paths$taxsim_output_aviationdb)

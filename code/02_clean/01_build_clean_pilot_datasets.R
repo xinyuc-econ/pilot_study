@@ -1,16 +1,15 @@
-# Purpose: build legacy-compatible cleaned pilot datasets without plots.
-# Inputs: FAA-rich pooled panel, state crosswalk, and total working population files
-# Outputs: `data/derived/main_us_pilots_any.csv`, `data/derived/main_us_pilots_atr.csv`, and `data/derived/sum_stat_prop_atr_pilots.csv`
+# Purpose: build annual AviationDB-based cleaned pilot datasets.
+# Inputs: `data/intermediate/pilot_ingest_panel.csv`, state crosswalk, and total working population files
+# Outputs: `data/derived/aviationdb/main_us_pilots_any.csv`, `data/derived/aviationdb/main_us_pilots_atr.csv`, and `data/derived/aviationdb/sum_stat_prop_atr_pilots.csv`
 
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
-# The cleaner still reads the FAA-rich intermediate so the legacy sample logic can be replicated.
 input_path <- Sys.getenv(
-  "FAA_RICH_INGEST_INPUT",
-  unset = file.path(paths$intermediate, "faa_pilot_rich_panel.csv")
+  "PILOT_INGEST_INPUT",
+  unset = file.path(paths$intermediate, "pilot_ingest_panel.csv")
 )
 
 # Input Loading ----
@@ -21,92 +20,84 @@ pilot_data <- read_csv(
   show_col_types = FALSE,
   col_types = cols(.default = col_character())
 ) |>
-  mutate(year = as.integer(year)) |>
-  filter(year != 2025)
+  mutate(
+    year = as.integer(year),
+    state = str_trim(state),
+    certificate_level = str_trim(certificate_level)
+  ) |>
+  filter(year %in% analysis_years)
+
+state_fips_crosswalk <- load_state_fips_crosswalk(paths)
+valid_states <- state_fips_crosswalk$state
 
 # Sample Restrictions and Enrichment ----
 
-processed_pilot_data <- pilot_data |>
-  filter(!is.na(country)) |>
+main_us_pilots_any <- pilot_data |>
+  filter(!is.na(unique_id), !is.na(state), state %in% valid_states) |>
+  left_join(state_fips_crosswalk, by = "state") |>
+  arrange(unique_id, year) |>
   group_by(unique_id) |>
-  mutate(
-    num_years = n_distinct(year),
-    num_USA = sum(country == "USA"),
-    never_in_US = num_USA == 0,
-    migrate_in_out_US = (num_USA > 0) & (num_USA < num_years)
-  ) |>
-  ungroup()
-
-always_in_main_us_pilots <- processed_pilot_data |>
-  filter(!never_in_US) |>
-  filter(!migrate_in_out_US) |>
-  group_by(unique_id) |>
-  mutate(
-    num_not_in_main_US = sum(state %in% excluded_territories),
-    always_in_main_US = num_not_in_main_US == 0
-  ) |>
-  filter(always_in_main_US) |>
+  mutate(num_years = n_distinct(year)) |>
   ungroup() |>
-  select(
-    -all_of(c(
-      "num_USA",
-      "never_in_US",
-      "migrate_in_out_US",
-      "num_not_in_main_US",
-      "always_in_main_US"
-    ))
-  )
-
-state_fips_crosswalk <- load_state_fips_crosswalk(paths)
-
-main_us_pilots_any <- state_fips_crosswalk |>
-  left_join(always_in_main_us_pilots, by = "state") |>
-  relocate(year) |>
   mutate(
     level_collapsed = case_when(
-      level == "A" ~ "ATR",
-      level == "C" ~ "C",
-      TRUE ~ "other"
+      certificate_level == "A" ~ "ATR",
+      certificate_level == "C" ~ "Commercial",
+      TRUE ~ "Other"
     )
+  ) |>
+  select(
+    "year",
+    "fips",
+    "statefull",
+    "state",
+    "unique_id",
+    "zip_code",
+    "num_years",
+    "certificate_level",
+    "level_collapsed",
+    "source"
   )
 
 main_us_pilots_atr <- main_us_pilots_any |>
   filter(level_collapsed == "ATR") |>
-  select(-level_collapsed, -level, -expire_date)
+  select(-"level_collapsed")
 
-csv_files <- list.files(
-  paths$raw_tot_working_pop,
-  pattern = "tot_working_pop\\.csv$",
-  full.names = TRUE
-)
-
-tot_working_pop <- read_csv(
-  csv_files,
-  id = "file",
-  show_col_types = FALSE,
-  col_types = cols(.default = col_guess())
-) |>
-  mutate(year = as.numeric(str_extract(file, "\\d{4}"))) |>
-  select(-file) |>
-  rename(state = statefips)
+tot_working_pop <- load_total_working_population(paths)
 
 sum_stat_prop_pilots <- main_us_pilots_atr |>
   count(year, state, name = "n_atr_pilots") |>
   left_join(tot_working_pop, by = c("year", "state")) |>
   mutate(prop_atr_pilots = n_atr_pilots / tot_work_pop * 100)
 
+if (anyNA(sum_stat_prop_pilots$tot_work_pop)) {
+  missing_rows <- sum_stat_prop_pilots |>
+    filter(is.na(tot_work_pop)) |>
+    distinct(year, state)
+
+  stop(
+    paste0(
+      "Total working population data is missing for some pilot state-years.\n",
+      paste(sprintf("%s %s", missing_rows$year, missing_rows$state), collapse = "\n")
+    ),
+    call. = FALSE
+  )
+}
+
 # Outputs ----
 
-write_csv(main_us_pilots_any, file.path(paths$derived, "main_us_pilots_any.csv"))
-write_csv(main_us_pilots_atr, file.path(paths$derived, "main_us_pilots_atr.csv"))
+dir.create(paths$derived_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
+write_csv(main_us_pilots_any, file.path(paths$derived_aviationdb, "main_us_pilots_any.csv"))
+write_csv(main_us_pilots_atr, file.path(paths$derived_aviationdb, "main_us_pilots_atr.csv"))
 write_csv(
   sum_stat_prop_pilots,
-  file.path(paths$derived, "sum_stat_prop_atr_pilots.csv")
+  file.path(paths$derived_aviationdb, "sum_stat_prop_atr_pilots.csv")
 )
 
 # Reporting ----
 
-message("Wrote cleaned pilot datasets to ", paths$derived)
+message("Wrote cleaned pilot datasets to ", paths$derived_aviationdb)
 message("main_us_pilots_any rows: ", nrow(main_us_pilots_any))
 message("main_us_pilots_atr rows: ", nrow(main_us_pilots_atr))
 message("sum_stat_prop_atr_pilots rows: ", nrow(sum_stat_prop_pilots))

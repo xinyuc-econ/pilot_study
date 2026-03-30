@@ -1,6 +1,6 @@
 # Purpose: construct analysis-ready PIT measure datasets from clean TAXSIM outputs.
-# Inputs: split TAXSIM output CSVs under `data/derived/taxsim_output/`
-# Outputs: SOI and BLS PIT datasets in `data/derived/`
+# Inputs: split TAXSIM output CSVs under `data/derived/aviationdb/taxsim_output/`
+# Outputs: SOI and BLS PIT datasets in `data/derived/aviationdb/`
 
 # Setup ----
 
@@ -37,7 +37,7 @@ assert_unique_case_rows <- function(data, keys, dataset_name) {
 
 taxsim_output_files <- tibble(
   path = list.files(
-    paths$taxsim_output,
+    paths$taxsim_output_aviationdb,
     pattern = "^taxsim_output_.*\\.csv$",
     recursive = FALSE,
     full.names = TRUE
@@ -65,7 +65,7 @@ taxsim_output_files <- tibble(
   arrange(method, occ_code, percentile)
 
 if (nrow(taxsim_output_files) == 0) {
-  stop("No TAXSIM output files were found under data/derived/taxsim_output.", call. = FALSE)
+  stop("No TAXSIM output files were found under data/derived/aviationdb/taxsim_output.", call. = FALSE)
 }
 
 irs_soi_crosswalk <- read_csv(
@@ -131,12 +131,14 @@ bls_pit_measures <- pmap_dfr(
 
 # Outputs ----
 
-write_csv(soi_pit_measures, file.path(paths$derived, "all_years_pit_soi.csv"))
-write_csv(soi_pit_wide, file.path(paths$derived, "all_years_pit_soi_wide.csv"))
-write_csv(bls_pit_measures, file.path(paths$derived, "all_years_pit_bls.csv"))
+dir.create(paths$derived_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
+write_csv(soi_pit_measures, file.path(paths$derived_aviationdb, "all_years_pit_soi.csv"))
+write_csv(soi_pit_wide, file.path(paths$derived_aviationdb, "all_years_pit_soi_wide.csv"))
+write_csv(bls_pit_measures, file.path(paths$derived_aviationdb, "all_years_pit_bls.csv"))
 
 # Reporting ----
 
-message("Wrote SOI PIT measures to ", file.path(paths$derived, "all_years_pit_soi.csv"))
-message("Wrote SOI PIT wide measures to ", file.path(paths$derived, "all_years_pit_soi_wide.csv"))
-message("Wrote BLS PIT measures to ", file.path(paths$derived, "all_years_pit_bls.csv"))
+message("Wrote SOI PIT measures to ", file.path(paths$derived_aviationdb, "all_years_pit_soi.csv"))
+message("Wrote SOI PIT wide measures to ", file.path(paths$derived_aviationdb, "all_years_pit_soi_wide.csv"))
+message("Wrote BLS PIT measures to ", file.path(paths$derived_aviationdb, "all_years_pit_bls.csv"))

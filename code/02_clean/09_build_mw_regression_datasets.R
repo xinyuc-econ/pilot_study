@@ -1,33 +1,24 @@
 # Purpose: build Moretti-Wilson style regression datasets from merged pilot-tax datasets.
-# Inputs: `data/derived/pilots_atr_tax_merged_bls_airline_*.csv` and `data/derived/pilots_atr_tax_merged_soi_*.csv`
-# Outputs: case-specific balanced and unbalanced MW regression datasets in `data/derived/`
+# Inputs: `data/derived/aviationdb/pilots_atr_tax_merged_bls_airline_*.csv` and `data/derived/aviationdb/pilots_atr_tax_merged_soi_*.csv`
+# Outputs: case-specific balanced and unbalanced MW regression datasets in `data/derived/aviationdb/`
 
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
 
-analysis_periods <- c(
-  "2009-2010",
-  "2010-2011",
-  "2011-2014",
-  "2014-2015",
-  "2015-2016",
-  "2016-2017",
-  "2017-2019",
-  "2019-2022"
-)
+balanced_panel_years <- length(analysis_years)
 
 build_mw_regression_dataset <- function(pilot_tax_merged, case_name, panel_variant) {
   filtered_panel <- pilot_tax_merged |>
     mutate(year = as.integer(year)) |>
-    filter(year <= 2022) |>
+    filter(year %in% analysis_years) |>
     group_by(unique_id) |>
     mutate(panel_num_years = n()) |>
     ungroup()
 
   if (panel_variant == "balanced") {
     filtered_panel <- filtered_panel |>
-      filter(panel_num_years == 9)
+      filter(panel_num_years == balanced_panel_years)
   }
 
   new_pilots <- filtered_panel |>
@@ -36,12 +27,11 @@ build_mw_regression_dataset <- function(pilot_tax_merged, case_name, panel_varia
     mutate(base_year = lag(year)) |>
     relocate("base_year", .before = "year") |>
     ungroup() |>
+    filter(!is.na(base_year), year - base_year == 1L) |>
     select(
       "base_year",
       "year",
       "unique_id",
-      "first_name",
-      "last_name",
       "origin_state",
       "origin_fips",
       "dest_state",
@@ -52,9 +42,6 @@ build_mw_regression_dataset <- function(pilot_tax_merged, case_name, panel_varia
   migration_flows <- new_pilots |>
     group_by(base_year, year, origin_state, dest_state) |>
     summarise(num_od = n(), .groups = "drop") |>
-    mutate(time_period = paste(base_year, year, sep = "-")) |>
-    filter(time_period %in% analysis_periods) |>
-    select(-"time_period") |>
     mutate(moved = if_else(origin_state != dest_state, 1L, 0L))
 
   moved_flows <- migration_flows |>
@@ -141,7 +128,7 @@ mw_case_variants <- expand.grid(
 case_output_paths <- map_chr(
   seq_len(nrow(mw_case_variants)),
   ~ file.path(
-    paths$derived,
+    paths$derived_aviationdb,
     build_case_filename(
       mw_case_variants$case_name[[.x]],
       mw_case_variants$panel_variant[[.x]]
@@ -153,7 +140,7 @@ case_datasets <- pmap(
   mw_case_variants,
   function(case_name, input_file, panel_variant) {
     read_csv(
-      file.path(paths$derived, input_file),
+      file.path(paths$derived_aviationdb, input_file),
       show_col_types = FALSE
     ) |>
       build_mw_regression_dataset(

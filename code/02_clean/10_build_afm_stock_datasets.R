@@ -1,14 +1,14 @@
 # Purpose: build AFM stock-analysis datasets from merged pilot-tax datasets.
-# Inputs: `data/derived/pilots_atr_tax_merged_bls_airline_*.csv` and `data/derived/pilots_atr_tax_merged_soi_*.csv`
-# Outputs: case-specific balanced and unbalanced AFM stock datasets in `data/derived/`
+# Inputs: `data/derived/aviationdb/pilots_atr_tax_merged_bls_airline_*.csv` and `data/derived/aviationdb/pilots_atr_tax_merged_soi_*.csv`
+# Outputs: case-specific balanced and unbalanced AFM stock datasets in `data/derived/aviationdb/`
 
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
 
-analysis_years <- c(2009, 2010, 2011, 2014, 2015, 2016, 2017, 2019, 2022)
 all_states <- c(state.abb, "DC")
 pivot_state <- "CA"
+balanced_panel_years <- length(analysis_years)
 
 build_afm_stock_dataset <- function(pilot_tax_merged, case_name, panel_variant) {
   pilots <- pilot_tax_merged |>
@@ -46,7 +46,7 @@ build_afm_stock_dataset <- function(pilot_tax_merged, case_name, panel_variant) 
     rename(origin_state = "dest_state", origin_n = "dest_n")
 
   balanced_dest_pop <- pilots |>
-    filter(panel_num_years == 9) |>
+    filter(panel_num_years == balanced_panel_years) |>
     group_by(year, dest_state) |>
     count(name = "b_dest_n") |>
     ungroup()
@@ -124,7 +124,7 @@ stock_case_variants <- expand.grid(
 case_output_paths <- map_chr(
   seq_len(nrow(stock_case_variants)),
   ~ file.path(
-    paths$derived,
+    paths$derived_aviationdb,
     build_case_filename(
       stock_case_variants$case_name[[.x]],
       stock_case_variants$panel_variant[[.x]]
@@ -136,7 +136,7 @@ case_datasets <- pmap(
   stock_case_variants,
   function(case_name, input_file, panel_variant) {
     read_csv(
-      file.path(paths$derived, input_file),
+      file.path(paths$derived_aviationdb, input_file),
       show_col_types = FALSE
     ) |>
       build_afm_stock_dataset(

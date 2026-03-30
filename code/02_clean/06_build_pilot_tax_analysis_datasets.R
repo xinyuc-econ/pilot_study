@@ -1,6 +1,6 @@
 # Purpose: build merged pilot-tax analysis datasets for SOI and BLS robustness cases.
-# Inputs: `data/derived/sum_stat_prop_atr_pilots.csv`, `data/derived/all_years_pit_soi_wide.csv`, and `data/derived/all_years_pit_bls.csv`
-# Outputs: `data/derived/pilot_tax_analysis_soi.csv` and `data/derived/pilot_tax_analysis_bls.csv`
+# Inputs: `data/derived/aviationdb/sum_stat_prop_atr_pilots.csv`, `data/derived/aviationdb/all_years_pit_soi_wide.csv`, and `data/derived/aviationdb/all_years_pit_bls.csv`
+# Outputs: `data/derived/aviationdb/pilot_tax_analysis_soi.csv` and `data/derived/aviationdb/pilot_tax_analysis_bls.csv`
 
 # Setup ----
 
@@ -27,18 +27,18 @@ assert_unique_case_rows <- function(data, keys, dataset_name) {
 }
 
 prop_pilots <- read_csv(
-  file.path(paths$derived, "sum_stat_prop_atr_pilots.csv"),
+  file.path(paths$derived_aviationdb, "sum_stat_prop_atr_pilots.csv"),
   show_col_types = FALSE
 ) |>
-  filter(year >= 2009, year <= 2022)
+  filter(year %in% analysis_years)
 
 pit_soi_wide <- read_csv(
-  file.path(paths$derived, "all_years_pit_soi_wide.csv"),
+  file.path(paths$derived_aviationdb, "all_years_pit_soi_wide.csv"),
   show_col_types = FALSE
 )
 
 pit_bls <- read_csv(
-  file.path(paths$derived, "all_years_pit_bls.csv"),
+  file.path(paths$derived_aviationdb, "all_years_pit_bls.csv"),
   show_col_types = FALSE
 )
 
@@ -118,17 +118,19 @@ pilot_tax_analysis_bls <- assert_unique_case_rows(
 
 # Outputs ----
 
+dir.create(paths$derived_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
 write_csv(
   pilot_tax_analysis_soi,
-  file.path(paths$derived, "pilot_tax_analysis_soi.csv")
+  file.path(paths$derived_aviationdb, "pilot_tax_analysis_soi.csv")
 )
 
 write_csv(
   pilot_tax_analysis_bls,
-  file.path(paths$derived, "pilot_tax_analysis_bls.csv")
+  file.path(paths$derived_aviationdb, "pilot_tax_analysis_bls.csv")
 )
 
 # Reporting ----
 
-message("Wrote SOI pilot-tax analysis dataset to ", file.path(paths$derived, "pilot_tax_analysis_soi.csv"))
-message("Wrote BLS pilot-tax analysis dataset to ", file.path(paths$derived, "pilot_tax_analysis_bls.csv"))
+message("Wrote SOI pilot-tax analysis dataset to ", file.path(paths$derived_aviationdb, "pilot_tax_analysis_soi.csv"))
+message("Wrote BLS pilot-tax analysis dataset to ", file.path(paths$derived_aviationdb, "pilot_tax_analysis_bls.csv"))

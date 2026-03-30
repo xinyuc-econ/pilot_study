@@ -25,16 +25,20 @@ This repository is the clean working copy of the pilot-study pipeline. Legacy co
 - Additional tax-input sources currently include `raw/bls` and `raw/soi`
 - Crosswalk files are external under `xwalks/`
 - `data/intermediate/`: generated pooled or harmonized datasets
-- `data/derived/`: generated analysis-ready datasets plus PIT measure datasets, pilot-tax merged analysis datasets, TAXSIM inputs, and TAXSIM outputs
-- `output/figures/`: presentation figures
-- `output/tables/`: exported summary tables
+- `data/derived/aviationdb/`: generated production datasets plus PIT measure datasets, pilot-tax merged analysis datasets, TAXSIM inputs, and TAXSIM outputs
+- `data/derived/faa/`: FAA-only reference and validation datasets
+- `output/aviationdb/figures/`: production presentation figures
+- `output/aviationdb/tables/`: production exported summary tables
+- `output/faa/figures/`: FAA-reference and overlap-validation figures
+- `output/faa/tables/`: FAA-reference tables when needed
 
 ## Where New Work Goes
 - New production scripts go in the appropriate `code/` stage folder
 - Reusable functions go in `code/utils/`
 - Temporary migration comparison scripts go in `code/99_validation/`
 - New legacy files that are being retired go in the relevant subfolder under `legacy_code/`
-- Legacy-compatible cleaning reads the FAA-rich intermediate dataset, not the minimal `pilot_ingest_panel.csv`
+- The production cleaning stage reads the canonical `pilot_ingest_panel.csv`
+- FAA-rich intermediates are kept only for legacy reference or overlap validation work
 
 ## Placement Rules
 - Do not add new production logic to `legacy_code/`

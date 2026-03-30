@@ -1,6 +1,6 @@
 # pilot_study
 
-This project builds a reproducible research pipeline to study how state personal income taxes affect the residential location and interstate mobility of U.S. pilots. It combines FAA Airmen Certification records with state tax measures and state working-population data to construct pilot location, migration, and summary datasets for analysis and figures.
+This project builds a reproducible research pipeline to study how state personal income taxes affect the residential location and interstate mobility of U.S. pilots. It combines AviationDB pilot records with state tax measures and state working-population data to construct pilot location, migration, and summary datasets for analysis and figures.
 
 This repository is the clean working copy for the project. Legacy scripts are kept under `legacy_code/` and migrated into `code/` one functional chunk at a time.
 
@@ -12,8 +12,10 @@ This repository is the clean working copy for the project. Legacy scripts are ke
 - `code/99_validation/`: temporary legacy-vs-clean validation scripts
 - `code/utils/`: reusable helper functions
 - `data/intermediate/`: generated pooled or harmonized datasets
-- `data/derived/`: generated analysis-ready datasets, PIT measure datasets, pilot-tax merged analysis datasets, TAXSIM inputs, and TAXSIM outputs
-- `output/figures/` and `output/tables/`: exported outputs
+- `data/derived/aviationdb/`: generated production datasets, PIT measure datasets, pilot-tax merged analysis datasets, TAXSIM inputs, and TAXSIM outputs
+- `data/derived/faa/`: FAA-only reference and validation datasets
+- `output/aviationdb/figures/` and `output/aviationdb/tables/`: production AviationDB outputs
+- `output/faa/figures/` and `output/faa/tables/`: FAA-reference and overlap-validation outputs
 - `tests/testthat/`: durable automated tests
 
 ## External raw data
@@ -36,5 +38,6 @@ If this local path changes again, update `code/00_setup/00_packages_paths.R` and
 - Keep plotting logic with analysis outputs, not in cleaning scripts.
 - Keep post-TAXSIM PIT measure construction in `code/02_clean/`, separate from the TAXSIM runner itself.
 - Keep merged pilot-tax analysis datasets in `code/02_clean/`, then generate binscatter figures from those datasets in `code/03_analysis/`.
-- The ingest layer is designed to normalize both `raw/airmen_data` and `raw/aviationdb_data` to a common pilot-year schema.
-- FAA-specific cleaning currently uses a richer intermediate dataset built from `raw/airmen_data` so legacy summary statistics can be replicated before a later AviationDB redesign.
+- The ingest layer normalizes both `raw/airmen_data` and `raw/aviationdb_data` to a common pilot-year schema.
+- AviationDB is now the production pilot source for the annual 2001-2022 analysis panel.
+- FAA flat files are retained for overlap-year validation only.

@@ -1,5 +1,5 @@
 # Purpose: produce Moretti-Wilson style regression outputs from merged pilot-tax datasets.
-# Inputs: `data/derived/mw_regression_dataset_*.csv`
+# Inputs: `data/derived/aviationdb/mw_regression_dataset_*.csv`
 # Outputs: balanced and unbalanced combined MW regression tables and case-specific binscatter figures
 
 # Setup ----
@@ -10,12 +10,15 @@ setFixest_nthreads(1)
 
 style_fixest <- style.tex("aer", fontsize = "small")
 
+dir.create(paths$tables_aviationdb, recursive = TRUE, showWarnings = FALSE)
+dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
 build_case_dataset_path <- function(case_name, panel_variant) {
   if (panel_variant == "balanced") {
-    return(file.path(paths$derived, sprintf("mw_regression_dataset_%s.csv", case_name)))
+    return(file.path(paths$derived_aviationdb, sprintf("mw_regression_dataset_%s.csv", case_name)))
   }
 
-  file.path(paths$derived, sprintf("mw_regression_dataset_%s_%s.csv", case_name, panel_variant))
+  file.path(paths$derived_aviationdb, sprintf("mw_regression_dataset_%s_%s.csv", case_name, panel_variant))
 }
 
 build_case_label <- function(case_name) {
@@ -135,7 +138,9 @@ write_case_binscatters <- function(case_name, panel_variant) {
     figure_filename <- sprintf("mw_reg_binscatter_%s_%s.png", case_name, panel_variant)
   }
 
-  figure_path <- file.path(paths$figures, figure_filename)
+  dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
+  figure_path <- file.path(paths$figures_aviationdb, figure_filename)
 
   ggsave(
     filename = figure_path,
@@ -200,9 +205,9 @@ walk(
     )
 
     regression_table_path <- if (panel_variant == "balanced") {
-      file.path(paths$tables, "mw_reg_3way_cluster_combined.tex")
+      file.path(paths$tables_aviationdb, "mw_reg_3way_cluster_combined.tex")
     } else {
-      file.path(paths$tables, "mw_reg_3way_cluster_combined_unbalanced.tex")
+      file.path(paths$tables_aviationdb, "mw_reg_3way_cluster_combined_unbalanced.tex")
     }
 
     etable(

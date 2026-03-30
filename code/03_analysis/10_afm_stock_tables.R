@@ -1,6 +1,6 @@
 # Purpose: produce AFM stock-model regression tables from merged pilot-tax datasets.
-# Inputs: `data/derived/afm_stock_dataset_*.csv`
-# Outputs: balanced and unbalanced combined AFM stock tables in `output/tables/`
+# Inputs: `data/derived/aviationdb/afm_stock_dataset_*.csv`
+# Outputs: balanced and unbalanced combined AFM stock tables in `output/aviationdb/tables/`
 
 # Setup ----
 
@@ -10,12 +10,14 @@ setFixest_nthreads(1)
 
 style_fixest <- style.tex("aer", fontsize = "small")
 
+dir.create(paths$tables_aviationdb, recursive = TRUE, showWarnings = FALSE)
+
 build_case_dataset_path <- function(case_name, panel_variant) {
   if (panel_variant == "balanced") {
-    return(file.path(paths$derived, sprintf("afm_stock_dataset_%s.csv", case_name)))
+    return(file.path(paths$derived_aviationdb, sprintf("afm_stock_dataset_%s.csv", case_name)))
   }
 
-  file.path(paths$derived, sprintf("afm_stock_dataset_%s_%s.csv", case_name, panel_variant))
+  file.path(paths$derived_aviationdb, sprintf("afm_stock_dataset_%s_%s.csv", case_name, panel_variant))
 }
 
 build_panel_label <- function(panel_variant) {
@@ -65,9 +67,9 @@ walk(
     )
 
     table_path <- if (panel_variant == "balanced") {
-      file.path(paths$tables, "afm_stock_combined.tex")
+      file.path(paths$tables_aviationdb, "afm_stock_combined.tex")
     } else {
-      file.path(paths$tables, "afm_stock_combined_unbalanced.tex")
+      file.path(paths$tables_aviationdb, "afm_stock_combined_unbalanced.tex")
     }
 
     etable(
