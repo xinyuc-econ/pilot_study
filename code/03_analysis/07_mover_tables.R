@@ -55,10 +55,8 @@ prop_moved_by_period <- mover_panel |>
     .groups = "drop"
   ) |>
   mutate(
-    lag_year = lag(year),
-    time_period = paste(lag_year, year, sep = "-")
+    time_period = paste(year - 1L, year, sep = "-")
   ) |>
-  filter(!is.na(lag_year)) |>
   select(
     "time_period",
     "n_pilots",
