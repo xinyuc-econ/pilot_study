@@ -1,6 +1,6 @@
 # Purpose: build state-year official FAA aggregate ATR pilot counts from annual civil airmen workbooks.
 # Inputs: annual FAA aggregate workbooks under `/Users/xinyuc/Documents/pilots/data/raw/airmen_aggregate_stats/`
-# Outputs: `data/derived/faa/faa_official_atr_pilots_by_state_year.csv`
+# Outputs: `data/derived/aviationdb/faa_official_atr_pilots_by_state_year.csv`
 
 # Setup ----
 
@@ -8,7 +8,7 @@ source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
 aggregate_stats_dir <- file.path(paths$raw_data_root, "raw", "airmen_aggregate_stats")
-output_path <- file.path(paths$derived_faa, "faa_official_atr_pilots_by_state_year.csv")
+output_path <- file.path(paths$derived_aviationdb, "faa_official_atr_pilots_by_state_year.csv")
 
 read_faa_aggregate_workbook <- function(workbook_path) {
   workbook_name <- basename(workbook_path)
@@ -77,7 +77,7 @@ faa_official_atr_counts <- purrr::map_dfr(workbook_paths, read_faa_aggregate_wor
 
 # Outputs ----
 
-dir.create(paths$derived_faa, recursive = TRUE, showWarnings = FALSE)
+dir.create(paths$derived_aviationdb, recursive = TRUE, showWarnings = FALSE)
 
 write_csv(faa_official_atr_counts, output_path)
 

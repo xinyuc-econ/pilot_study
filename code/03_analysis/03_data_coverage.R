@@ -1,96 +1,240 @@
-# Purpose: compare overlap-year ATR coverage between AviationDB and FAA flat files.
-# Inputs: FAA and AviationDB raw inputs for overlapping years
-# Outputs: overlap validation figure files in `output/faa/figures/`
+# Purpose: reproduce migrated national and state-level ATR data coverage figures using AviationDB ATR pilot data.
+# Inputs: `data/derived/aviationdb/main_us_pilots_atr.csv`, `data/derived/aviationdb/faa_official_atr_pilots_by_state_year.csv`, and `data/derived/aviationdb/sum_stat_prop_atr_pilots.csv`
+# Outputs: four coverage figure files in `output/aviationdb/figures/`
 
 # Setup ----
 
 source("code/00_setup/00_packages_paths.R")
-source("code/utils/ingest_helpers.R")
-source("code/utils/cleaning_helpers.R")
 
-dir.create(paths$figures_faa, recursive = TRUE, showWarnings = FALSE)
+coverage_count_path <- file.path(paths$figures_aviationdb, "airmen_atr_coverage_count.png")
+coverage_percentage_path <- file.path(paths$figures_aviationdb, "airmen_atr_coverage_percentage.png")
+coverage_combined_path <- file.path(paths$figures_aviationdb, "airmen_atr_coverage_both.png")
+state_coverage_map_path <- file.path(paths$figures_aviationdb, "state_coverage_atr_pilots.png")
 
-national_overlap_path <- file.path(paths$figures_faa, "aviationdb_faa_overlap_counts.png")
-state_overlap_path <- file.path(paths$figures_faa, "aviationdb_faa_overlap_pct_diff.png")
+dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
 
-faa_inputs <- discover_ingest_inputs(paths, source = "faa_flat")
-aviationdb_inputs <- discover_ingest_inputs(paths, source = "aviationdb")
-overlap_years <- intersect(faa_inputs$year, aviationdb_inputs$year)
+# Input Loading ----
 
-if (length(overlap_years) == 0) {
-  stop("No overlapping years found between FAA flat files and AviationDB.", call. = FALSE)
-}
+pilot_data <- read_csv(
+  file.path(paths$derived_aviationdb, "main_us_pilots_atr.csv"),
+  show_col_types = FALSE,
+  col_types = cols(.default = col_character())
+) |>
+  mutate(year = as.integer(year))
 
-state_crosswalk <- load_state_fips_crosswalk(paths) |>
-  select("fips", "state")
-
-build_source_overlap_counts <- function(source, years) {
-  build_pilot_ingest_dataset(paths, source = source, years = years) |>
-    filter(certificate_level == "A") |>
-    left_join(state_crosswalk, by = "state") |>
-    filter(!is.na(fips)) |>
-    mutate(source = source)
-}
-
-overlap_panel <- bind_rows(
-  build_source_overlap_counts("faa_flat", overlap_years),
-  build_source_overlap_counts("aviationdb", overlap_years)
+faa_official_state_counts <- read_csv(
+  file.path(paths$derived_aviationdb, "faa_official_atr_pilots_by_state_year.csv"),
+  show_col_types = FALSE
 )
 
-national_counts <- overlap_panel |>
-  count(year, source, name = "n_atr_pilots")
+state_prop_data <- read_csv(
+  file.path(paths$derived_aviationdb, "sum_stat_prop_atr_pilots.csv"),
+  show_col_types = FALSE
+)
 
-state_counts <- overlap_panel |>
-  count(year, state, source, name = "n_atr_pilots") |>
-  tidyr::pivot_wider(names_from = "source", values_from = "n_atr_pilots") |>
+# Derived Analysis Inputs ----
+
+aviationdb_coverage <- pilot_data |>
+  count(year, name = "n") |>
+  mutate(data_type = "aviationdb")
+
+faa_coverage <- faa_official_state_counts |>
+  filter(year %in% analysis_years) |>
+  group_by(year) |>
+  summarise(n = sum(faa_n_atr_pilots, na.rm = TRUE), .groups = "drop") |>
+  mutate(data_type = "faa")
+
+coverage <- bind_rows(aviationdb_coverage, faa_coverage) |>
+  filter(year %in% analysis_years)
+
+coverage_years <- sort(unique(coverage$year))
+
+label_info <- coverage |>
+  filter(year == 2019) |>
   mutate(
-    row_diff = aviationdb - faa_flat,
-    pct_diff = row_diff / faa_flat * 100
+    label = case_when(
+      data_type == "aviationdb" ~ "AviationDB Data",
+      data_type == "faa" ~ "Official Aggregate Data"
+    )
   )
+
+coverage_wide <- aviationdb_coverage |>
+  select(year, aviationdb = n) |>
+  left_join(
+    faa_coverage |>
+      select(year, faa = n),
+    by = "year"
+  ) |>
+  mutate(coverage = aviationdb / faa)
+
+state_coverage <- faa_official_state_counts |>
+  left_join(
+    state_prop_data |>
+      rename(my_n_atr_pilots = n_atr_pilots),
+    by = c("state", "year")
+  ) |>
+  mutate(
+    coverage = my_n_atr_pilots / faa_n_atr_pilots * 100
+  ) |>
+  filter(!is.na(coverage))
+
+state_map <- usmap::us_map("states")
+
+state_centroids <- suppressWarnings(sf::st_point_on_surface(state_map))
+state_centroid_coords <- sf::st_coordinates(state_centroids)
+
+state_centers <- state_centroids |>
+  sf::st_drop_geometry() |>
+  mutate(
+    X = state_centroid_coords[, "X"],
+    Y = state_centroid_coords[, "Y"]
+  ) |>
+  select("abbr", "X", "Y")
+
+state_coverage_labeled <- state_coverage |>
+  left_join(state_centers, by = c("state" = "abbr"))
+
+repel_states <- c("RI", "CT", "NJ", "DE", "MD", "MA", "DC", "VT", "NH")
+
+labels_repel <- state_coverage_labeled |>
+  filter(state %in% repel_states)
+
+labels_regular <- state_coverage_labeled |>
+  filter(!state %in% repel_states)
+
+state_coverage_map_data <- state_map |>
+  left_join(state_coverage, by = c("abbr" = "state"))
 
 # 1. Figures ----
 
-## 1.1 National Overlap-Year ATR Counts ----
+## 1.1 ATR Counts: AviationDB Data vs Official FAA Totals ----
 
-national_overlap_plot <- national_counts |>
-  ggplot(aes(x = year, y = n_atr_pilots, color = source, shape = source)) +
-  geom_line(linewidth = 1.1) +
-  geom_point(size = 2.5) +
-  scale_y_continuous(labels = scales::label_number(scale = 1 / 1000, suffix = "K")) +
-  scale_x_continuous(breaks = overlap_years) +
-  labs(
-    x = NULL,
-    y = NULL,
-    color = NULL,
-    shape = NULL,
-    title = "ATR counts in overlapping FAA and AviationDB years"
+coverage_count_plot <- coverage |>
+  ggplot(aes(x = year, y = n, color = data_type, shape = data_type)) +
+  geom_point(size = 3) +
+  geom_line(linewidth = 1.2) +
+  scale_y_continuous(
+    name = NULL,
+    labels = scales::label_number(scale = 1 / 1000, suffix = "K"),
+    breaks = seq(100000, 180000, 10000)
   ) +
-  theme_bw()
-
-ggsave(national_overlap_path, plot = national_overlap_plot, width = 9, height = 6)
-
-## 1.2 State-Year Percent Difference Heatmap ----
-
-state_overlap_plot <- state_counts |>
-  ggplot(aes(x = year, y = state, fill = pct_diff)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient2(
-    low = "#b2182b",
-    mid = "white",
-    high = "#2166ac",
-    midpoint = 0,
-    name = "% diff"
+  scale_x_continuous(
+    name = NULL,
+    breaks = coverage_years
   ) +
-  labs(
-    x = NULL,
-    y = NULL,
-    title = "AviationDB minus FAA ATR counts, percent difference"
+  geom_text(
+    data = label_info,
+    aes(label = label, x = year + 3, y = n + 5000),
+    fontface = "bold",
+    size = 6,
+    hjust = "right",
+    vjust = "bottom"
   ) +
   theme_bw() +
-  theme(axis.text.y = element_text(size = 8))
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 17),
+    axis.text.y = element_text(size = 17),
+    plot.title = element_text(size = 25),
+    legend.position = "none"
+  )
 
-ggsave(state_overlap_path, plot = state_overlap_plot, width = 12, height = 11)
+ggsave(
+  filename = coverage_count_path,
+  plot = coverage_count_plot,
+  width = 8,
+  height = 6.5
+)
+
+## 1.2 ATR Coverage Percentage by Year ----
+
+coverage_percentage_plot <- coverage_wide |>
+  filter(!is.na(coverage)) |>
+  ggplot(aes(x = as.factor(year), y = coverage)) +
+  geom_col() +
+  scale_y_continuous(
+    name = NULL,
+    labels = scales::label_percent(accuracy = 1),
+    breaks = seq(0, 1, 0.1)
+  ) +
+  scale_x_discrete(name = NULL) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 17),
+    axis.text.y = element_text(size = 17),
+    plot.title = element_text(size = 25)
+  )
+
+ggsave(
+  filename = coverage_percentage_path,
+  plot = coverage_percentage_plot,
+  width = 8,
+  height = 6.5
+)
+
+## 1.3 Combined Coverage Figure ----
+
+combined_coverage_plot <- patchwork::wrap_plots(
+  coverage_count_plot,
+  coverage_percentage_plot,
+  ncol = 2
+)
+
+ggsave(
+  filename = coverage_combined_path,
+  plot = combined_coverage_plot,
+  width = 16,
+  height = 6.5,
+  dpi = 300
+)
+
+## 1.4 State-Level ATR Coverage by Year ----
+
+state_coverage_map <- ggplot() +
+  geom_sf(data = state_map, fill = NA, color = "black") +
+  geom_sf(
+    data = state_coverage_map_data,
+    aes(fill = coverage)
+  ) +
+  scale_fill_viridis_c(
+    name = "Data Coverage (%)",
+    alpha = 0.9,
+    direction = -1
+  ) +
+  geom_text(
+    data = labels_regular,
+    aes(x = X, y = Y, label = paste0(round(coverage, 0), "%")),
+    color = "black",
+    size = 4
+  ) +
+  ggrepel::geom_text_repel(
+    data = labels_repel,
+    aes(x = X, y = Y, label = paste0(round(coverage, 0), "%")),
+    nudge_x = 6e5,
+    direction = "x",
+    segment.color = "gray50",
+    point.padding = 0.2,
+    max.overlaps = Inf,
+    force = 5,
+    force_pull = 0.5,
+    size = 4,
+    min.segment.length = 0
+  ) +
+  facet_wrap(~year) +
+  theme_void() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    strip.text = element_text(size = 15)
+  )
+
+ggsave(
+  filename = state_coverage_map_path,
+  plot = state_coverage_map,
+  width = 20,
+  height = 10
+)
 
 # Reporting ----
 
-message("Saved overlap validation figures to ", paths$figures_faa)
+message("Saved coverage figures to ", paths$figures_aviationdb)
