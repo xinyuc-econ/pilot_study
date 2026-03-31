@@ -41,3 +41,4 @@ If this local path changes again, update `code/00_setup/00_packages_paths.R` and
 - The ingest layer normalizes both `raw/airmen_data` and `raw/aviationdb_data` to a common pilot-year schema.
 - AviationDB is now the production pilot source for the annual 2001-2022 analysis panel.
 - FAA flat files are retained for overlap-year validation only.
+- SOI-based tax-measure analyses currently use 2001-2022, while BLS-based tax-measure analyses use 2007-2022 because earlier BLS wage data were removed due to reporting issues.

@@ -23,8 +23,8 @@ build_case_dataset_path <- function(case_name, panel_variant) {
 
 build_case_label <- function(case_name) {
   case_labels <- c(
-    bls_airline_mean = "BLS airline mean",
-    bls_airline_median = "BLS airline median",
+    bls_airline_mean = "BLS airline mean (2007-2022)",
+    bls_airline_median = "BLS airline median (2007-2022)",
     soi_p90 = "SOI p90",
     soi_p95 = "SOI p95",
     soi_p99 = "SOI p99"
@@ -222,8 +222,8 @@ walk(
         build_panel_label(panel_variant)
       ),
       headers = c(
-        "BLS airline mean",
-        "BLS airline median",
+        "BLS airline mean (2007-2022)",
+        "BLS airline median (2007-2022)",
         "SOI p90",
         "SOI p95",
         "SOI p99"

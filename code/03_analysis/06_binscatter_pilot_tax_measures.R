@@ -11,12 +11,14 @@ dir.create(paths$figures_aviationdb, recursive = TRUE, showWarnings = FALSE)
 pilot_tax_soi <- read_csv(
   file.path(paths$derived_aviationdb, "pilot_tax_analysis_soi.csv"),
   show_col_types = FALSE
-)
+) |>
+  filter(year %in% soi_analysis_years)
 
 pilot_tax_bls <- read_csv(
   file.path(paths$derived_aviationdb, "pilot_tax_analysis_bls.csv"),
   show_col_types = FALSE
-)
+) |>
+  filter(year %in% bls_analysis_years)
 
 compute_all_states_y_limits <- function(data) {
   y_range <- range(data$prop_atr_pilots, na.rm = TRUE)
@@ -167,9 +169,11 @@ save_case_binscatters <- function(
     x_label_astr <- "Average state tax rate (%)"
     x_label_atr <- "Average tax rate (%)"
     caption <- sprintf(
-      "Notes: tax measure simulated using %s wage of %s pilots",
+      "Notes: tax measure simulated using %s wage of %s pilots, %s-%s sample",
       percentile,
-      pilot_type
+      pilot_type,
+      min(bls_analysis_years),
+      max(bls_analysis_years)
     )
   }
 

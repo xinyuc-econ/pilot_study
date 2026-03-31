@@ -6,12 +6,21 @@
 
 source("code/00_setup/00_packages_paths.R")
 
-balanced_panel_years <- length(analysis_years)
+get_case_years <- function(case_name) {
+  if (str_detect(case_name, "^bls_")) {
+    return(bls_analysis_years)
+  }
+
+  soi_analysis_years
+}
 
 build_mw_regression_dataset <- function(pilot_tax_merged, case_name, panel_variant) {
+  case_years <- get_case_years(case_name)
+  balanced_panel_years <- length(case_years)
+
   filtered_panel <- pilot_tax_merged |>
     mutate(year = as.integer(year)) |>
-    filter(year %in% analysis_years) |>
+    filter(year %in% case_years) |>
     group_by(unique_id) |>
     mutate(panel_num_years = n()) |>
     ungroup()

@@ -81,8 +81,8 @@ walk(
       cluster = ~dest_state,
       title = paste("AFM stock model results:", build_panel_label(panel_variant)),
       headers = c(
-        "BLS airline mean",
-        "BLS airline median",
+        "BLS airline mean (2007-2022)",
+        "BLS airline median (2007-2022)",
         "SOI p90",
         "SOI p95",
         "SOI p99"

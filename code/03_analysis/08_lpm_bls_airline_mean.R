@@ -7,7 +7,8 @@
 source("code/00_setup/00_packages_paths.R")
 
 setFixest_nthreads(1)
-balanced_panel_years <- length(analysis_years)
+bls_balanced_panel_years <- length(bls_analysis_years)
+soi_balanced_panel_years <- length(soi_analysis_years)
 
 BLS_airline_mean <- read_csv(
   file.path(paths$derived_aviationdb, "pilots_atr_tax_merged_bls_airline_mean.csv"),
@@ -31,13 +32,12 @@ write_soi_lpm_table <- function(percentile) {
   ) |>
     mutate(year = as.integer(year))
 
-  # Keep the SOI sample rule visible here because it matches the BLS main LPM specification.
   lpm_sample <- pilot_tax_merged |>
-    filter(year %in% analysis_years, is_adjacent_year) |>
+    filter(year %in% soi_analysis_years, is_adjacent_year) |>
     group_by(unique_id) |>
     mutate(num_years = n()) |>
     ungroup() |>
-    filter(!is.na(origin_fips), num_years == balanced_panel_years - 1L) |>
+    filter(!is.na(origin_fips), num_years == soi_balanced_panel_years - 1L) |>
     filter(
       origin_state != "AK",
       origin_state != "HI",
@@ -73,13 +73,12 @@ write_soi_lpm_table <- function(percentile) {
 
 # Derived Analysis Inputs ----
 
-# Keep the legacy sample rule visible here because it is part of the regression specification.
 lpm_sample <- BLS_airline_mean |>
-  filter(year %in% analysis_years, is_adjacent_year) |>
+  filter(year %in% bls_analysis_years, is_adjacent_year) |>
   group_by(unique_id) |>
   mutate(num_years = n()) |>
   ungroup() |>
-  filter(!is.na(origin_fips), num_years == balanced_panel_years - 1L) |>
+  filter(!is.na(origin_fips), num_years == bls_balanced_panel_years - 1L) |>
   filter(
     origin_state != "AK",
     origin_state != "HI",

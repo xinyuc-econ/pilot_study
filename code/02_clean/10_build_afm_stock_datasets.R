@@ -10,10 +10,21 @@ all_states <- c(state.abb, "DC")
 pivot_state <- "CA"
 balanced_panel_years <- length(analysis_years)
 
+get_case_years <- function(case_name) {
+  if (str_detect(case_name, "^bls_")) {
+    return(bls_analysis_years)
+  }
+
+  soi_analysis_years
+}
+
 build_afm_stock_dataset <- function(pilot_tax_merged, case_name, panel_variant) {
+  case_years <- get_case_years(case_name)
+  balanced_panel_years <- length(case_years)
+
   pilots <- pilot_tax_merged |>
     mutate(year = as.integer(year)) |>
-    filter(year %in% analysis_years) |>
+    filter(year %in% case_years) |>
     group_by(unique_id) |>
     mutate(panel_num_years = n()) |>
     ungroup()
@@ -26,7 +37,7 @@ build_afm_stock_dataset <- function(pilot_tax_merged, case_name, panel_variant) 
     as_tibble()
 
   year_state_pair <- expand.grid(
-    year = analysis_years,
+    year = case_years,
     pair_index = seq_len(nrow(ordered_pairs)),
     stringsAsFactors = FALSE
   ) |>

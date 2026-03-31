@@ -25,7 +25,7 @@ pit_airline_mean <- pit |>
   left_join(state_crosswalk, by = "fips") |>
   select("pilot_type", "percentile", "year", "state", "atr") |>
   mutate(atr = atr * 100) |>
-  filter(pilot_type == "airline", percentile == "mean", year %in% analysis_years)
+  filter(pilot_type == "airline", percentile == "mean", year %in% bls_analysis_years)
 
 # 1. Figures ----
 
@@ -41,8 +41,8 @@ atr_map <- plot_usmap(
     fill = "",
     title = sprintf(
       "Average tax rate for airline pilots, mean wage measure, %s-%s",
-      min(analysis_years),
-      max(analysis_years)
+      min(bls_analysis_years),
+      max(bls_analysis_years)
     )
   ) +
   theme(

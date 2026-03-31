@@ -85,6 +85,7 @@ soi_pit_measures <- map2_dfr(
   soi_output_files$percentile,
   function(path, percentile) {
     read_csv(path, show_col_types = FALSE) |>
+      filter(year %in% soi_analysis_years) |>
       select("year", "state", "fiitax", "siitax", "v10_federal_agi", "srate") |>
       build_pit_measures() |>
       mutate(percentile = percentile)
@@ -109,6 +110,7 @@ bls_pit_measures <- pmap_dfr(
   bls_output_files,
   function(path, method, percentile, occ_code) {
     read_csv(path, show_col_types = FALSE) |>
+      filter(year %in% bls_analysis_years) |>
       select("year", "state", "fiitax", "siitax", "v10_federal_agi", "srate") |>
       build_pit_measures() |>
       mutate(

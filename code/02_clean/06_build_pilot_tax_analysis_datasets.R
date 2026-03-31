@@ -29,8 +29,7 @@ assert_unique_case_rows <- function(data, keys, dataset_name) {
 prop_pilots <- read_csv(
   file.path(paths$derived_aviationdb, "sum_stat_prop_atr_pilots.csv"),
   show_col_types = FALSE
-) |>
-  filter(year %in% analysis_years)
+)
 
 pit_soi_wide <- read_csv(
   file.path(paths$derived_aviationdb, "all_years_pit_soi_wide.csv"),
@@ -60,7 +59,12 @@ pit_soi_long <- pit_soi_wide |>
   mutate(method = "soi")
 
 pilot_tax_analysis_soi <- pit_soi_long |>
-  left_join(prop_pilots, by = c("year", "state")) |>
+  filter(year %in% soi_analysis_years) |>
+  left_join(
+    prop_pilots |>
+      filter(year %in% soi_analysis_years),
+    by = c("year", "state")
+  ) |>
   select(
     "method",
     "percentile",
@@ -90,8 +94,13 @@ pilot_tax_analysis_bls <- pit_bls |>
       select("fips", "state"),
     by = "fips"
   ) |>
+  filter(year %in% bls_analysis_years) |>
   mutate(method = "bls") |>
-  left_join(prop_pilots, by = c("year", "state")) |>
+  left_join(
+    prop_pilots |>
+      filter(year %in% bls_analysis_years),
+    by = c("year", "state")
+  ) |>
   select(
     "method",
     "pilot_type",

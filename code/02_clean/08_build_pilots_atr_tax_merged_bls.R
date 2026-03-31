@@ -7,11 +7,11 @@
 source("code/00_setup/00_packages_paths.R")
 source("code/utils/cleaning_helpers.R")
 
-build_pilot_tax_case <- function(pit_case, percentile, pilot_type = NULL) {
+build_pilot_tax_case <- function(pit_case, percentile, case_years, pilot_type = NULL) {
   case_percentile <- percentile
 
   atr_changes <- pit_case |>
-    filter(year %in% taxsim_years) |>
+    filter(year %in% case_years) |>
     select("year", "fips", "atr") |>
     mutate(atr = round(atr, 4)) |>
     arrange(fips, year) |>
@@ -31,6 +31,7 @@ build_pilot_tax_case <- function(pit_case, percentile, pilot_type = NULL) {
     )
 
   mover_panel |>
+    filter(year %in% case_years) |>
     mutate(dest_fips = fips) |>
     left_join(
       atr_changes |>
@@ -74,50 +75,55 @@ state_crosswalk <- load_state_fips_crosswalk(paths)
 # Derived Datasets ----
 
 BLS_airline_mean <- pit_bls |>
-  filter(pilot_type == "airline", percentile == "mean", year %in% analysis_years) |>
+  filter(pilot_type == "airline", percentile == "mean", year %in% bls_analysis_years) |>
   select("year", "fips", "atr")
 
 BLS_airline_median <- pit_bls |>
-  filter(pilot_type == "airline", percentile == "median", year %in% analysis_years) |>
+  filter(pilot_type == "airline", percentile == "median", year %in% bls_analysis_years) |>
   select("year", "fips", "atr")
 
 SOI_p90 <- pit_soi |>
-  filter(percentile == "p90", year %in% analysis_years) |>
+  filter(percentile == "p90", year %in% soi_analysis_years) |>
   select("year", "fips", "atr")
 
 SOI_p95 <- pit_soi |>
-  filter(percentile == "p95", year %in% analysis_years) |>
+  filter(percentile == "p95", year %in% soi_analysis_years) |>
   select("year", "fips", "atr")
 
 SOI_p99 <- pit_soi |>
-  filter(percentile == "p99", year %in% analysis_years) |>
+  filter(percentile == "p99", year %in% soi_analysis_years) |>
   select("year", "fips", "atr")
 
 pilots_atr_tax_merged_bls_airline_mean <- build_pilot_tax_case(
   pit_case = BLS_airline_mean,
-  percentile = "mean"
+  percentile = "mean",
+  case_years = bls_analysis_years
 ) |>
   add_pilot_type("airline")
 
 pilots_atr_tax_merged_bls_airline_median <- build_pilot_tax_case(
   pit_case = BLS_airline_median,
-  percentile = "median"
+  percentile = "median",
+  case_years = bls_analysis_years
 ) |>
   add_pilot_type("airline")
 
 pilots_atr_tax_merged_soi_p90 <- build_pilot_tax_case(
   pit_case = SOI_p90,
-  percentile = "p90"
+  percentile = "p90",
+  case_years = soi_analysis_years
 )
 
 pilots_atr_tax_merged_soi_p95 <- build_pilot_tax_case(
   pit_case = SOI_p95,
-  percentile = "p95"
+  percentile = "p95",
+  case_years = soi_analysis_years
 )
 
 pilots_atr_tax_merged_soi_p99 <- build_pilot_tax_case(
   pit_case = SOI_p99,
-  percentile = "p99"
+  percentile = "p99",
+  case_years = soi_analysis_years
 )
 
 # Outputs ----
