@@ -1,0 +1,171 @@
+\documentclass{article}
+\usepackage{geometry}
+\geometry{tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage{array}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\allowdisplaybreaks
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage[normalem]{ulem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[flushleft]{threeparttable}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{mathtools}
+\usepackage{cancel}
+\usepackage{comment}
+\raggedbottom
+\onehalfspacing
+\usepackage{lscape}
+\usepackage{xcolor}
+\usepackage{comment}
+\usepackage{pdflscape} 
+\usepackage{ulem}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+
+
+\hypersetup{colorlinks, citecolor=blue,urlcolor=blue,allcolors=blue}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+
+\begin{document}
+	\noindent
+	Notes on incorporating new AviationDB data into pilot study\\
+	Xinyu \\
+	03-31-26
+
+\section{Motivational Evidence}
+\subsection{Pilots are Mobile}
+\begin{itemize}
+	\item Airline transport pilots and commerical pilots have much higher interstate migration rates (4-7\%) compared to the general population (2-3\%)
+\end{itemize}
+	
+	\begin{figure} [H]
+		\centering
+		\includegraphics[scale=0.6]{../output/aviationdb/figures/migration_rates_by_pilot_group.png}
+	\end{figure}
+	
+	
+\section{Correlating Taxes with Pilot Density}
+
+\begin{itemize}
+	\item Binscatter plots showing that lower tax states have a higher concentration of pilots, mainly driven by zero-income tax states
+	\item x-axis: average state tax rate (top), average state + federal tax rate (bottom)
+	\item y-axis: Share of pilots with respect to total working population in each state by year
+\end{itemize}
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.45]{../output/aviationdb/figures/binscatter_astr_pilots_bls_airline_mean_no_AK_HI.png}
+\end{figure}
+
+\begin{figure} [H]
+	\centering
+	\includegraphics[scale=0.45]{../output/aviationdb/figures/binscatter_atr_pilots_bls_airline_mean_no_AK_HI.png}
+\end{figure}
+
+
+\section{Empirical Strategy}
+\subsection{Stock Model (Agrawal et. al 2025)}
+\textbf{Goal}: Do states with lower taxes have a larger population of pilots?
+
+	\begin{equation*}
+	\ln \biggr ( \frac{N_{s, t}}{N_{s', t}} \biggr)=  \beta \ln \biggr(\frac{1 - \tau_{s, t}}{1 - \tau_{s', t}} \biggr) + \gamma_s + \gamma_t +  u_{s, t}
+\end{equation*}
+where
+\medskip
+\begin{itemize}
+	\small
+	\item $s$ indexes state, $s'$ indexes the reference state, and $t$ indexes year.
+	\medskip
+	\item LHS:  population of pilots in state $s$ relative to the reference state
+	\medskip
+	\item RHS: net-of-income-tax rate in state $s$ relative to the reference state
+	\medskip
+	\item $ \gamma_s$ and $\gamma_t$:  state and year fixed effects
+\end{itemize} 
+
+\input{../output/aviationdb/tables/afm_stock_combined.tex}
+
+Notes:
+\begin{itemize}
+	\item The effects go away if I use the AGI thresholds from IRS SOI individual tax stats to construct the tax measures. 
+\end{itemize}
+
+\newpage
+\begin{landscape}
+	\subsection{Migration Log Odds Ratio (Moretti and Wilson 2017)}
+	\textbf{Goal}: Do destination-origin state tax differentials affect the probability of moving from the destination state to the origin state? \\
+	
+	Regression:
+	\begin{align*} 
+		\underbrace{\log \Big(\frac{P_{odt}}{P_{oot}}\Big)}_{\substack{\text{migration}\\\text{log odds ratio}}}
+		= \beta_0 + \beta_1 \underbrace{[\log(1 - \tau_{dt}) - \log(1 - \tau_{ot})]}_{\substack{\text{log dest-origin}\\\text{net-of-tax diff.}}}
+		+ \underbrace{\gamma_t}_{\substack{\text{year}\\\text{FE}}}
+		+ \underbrace{\gamma_d}_{\substack{\text{destination}\\\text{state FE}}}
+		+ \underbrace{\gamma_o}_{\substack{\text{origin}\\\text{state FE}}}
+		+ \underbrace{\gamma_{od}}_{\substack{\text{state-pair}\\\text{FE}}}
+		+ u_{odt}
+	\end{align*}
+	where $o$ indexes the origin state, $d$ indexes the destination state, and $t$ indexes year.
+	\begin{itemize}
+		\item LHS: migration log odds ratio, between the number of pilots who moved from the origin state $o$ to the destination state $d$ and the number of pilots who stayed in the origin state $o$ in year $t$.
+		\item RHS: log net-of-average-personal-income tax rate difference between the destination state and the origin state.
+	\end{itemize}  
+	
+	\begin{figure} [H]
+		\centering
+		\includegraphics[scale=0.45]{../output/aviationdb/figures/mw_reg_binscatter_bls_airline_mean.png}
+		\caption{}
+	\end{figure}
+	
+	
+\end{landscape}
+
+\input{../output/aviationdb/tables/mw_reg_3way_cluster_combined.tex}
+
+
+\subsection{Individual-Level Linear Probability Model}
+
+\textbf{Goal:} Are pilots less likely to move out of the origin state if the net-of-tax rate is high? \\
+
+Regression:
+\begin{equation*}
+	\text{Moved}_{i,o,t} =  \beta (1 - \tau_{o, t}) + \gamma_o + \gamma_t +  \gamma_i  +u_{i, o, t}
+\end{equation*}
+\begin{itemize}
+	\item LHS: 1 if moved, 0 if not.
+	\medskip
+	\item RHS: net-of-ATR in origin state 
+	\medskip
+	\item $ \gamma_o$, $\gamma_t$, and $\gamma_i$:  origin state, year, and pilot fixed effects
+\end{itemize} 
+
+
+\input{../output/aviationdb/tables/lpm_bls_airline_mean.tex}
+
+\subsection{Quasi-Experimental Design: Event Study}
+
+This is still in progress. The idea is to do a DID utilizing the 2017 TCJA, or to do a staggered DID utilizing major state income tax changes (defined using a threshold, say 1pp). If successful, this should be the main empirical strategy.\\
+
+\noindent
+Current challenges:
+\begin{itemize}
+	\item There are only 5 major state income tax changes (above 1pp) during 2007-2022.
+	\item Still need to figure out a reasonable control group for airline pilots. Previously the idea is to use commercial pilots as a control group, but based on the migration rates graph, commercial pilots seem to be similarly mobile, despite earning much less than airline pilots.
+\end{itemize}
+\end{document}
+
+
+
+
+
+
+
+
+
+

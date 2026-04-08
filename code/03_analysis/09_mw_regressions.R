@@ -24,10 +24,7 @@ build_case_dataset_path <- function(case_name, panel_variant) {
 build_case_label <- function(case_name) {
   case_labels <- c(
     bls_airline_mean = "BLS airline mean (2007-2022)",
-    bls_airline_median = "BLS airline median (2007-2022)",
-    soi_p90 = "SOI p90",
-    soi_p95 = "SOI p95",
-    soi_p99 = "SOI p99"
+    bls_airline_median = "BLS airline median (2007-2022)"
   )
 
   unname(case_labels[[case_name]])
@@ -158,10 +155,7 @@ write_case_binscatters <- function(case_name, panel_variant) {
 mw_cases <- tribble(
   ~case_name,
   "bls_airline_mean",
-  "bls_airline_median",
-  "soi_p90",
-  "soi_p95",
-  "soi_p99"
+  "bls_airline_median"
 )
 
 panel_variants <- c("balanced", "unbalanced")
@@ -223,10 +217,7 @@ walk(
       ),
       headers = c(
         "BLS airline mean (2007-2022)",
-        "BLS airline median (2007-2022)",
-        "SOI p90",
-        "SOI p95",
-        "SOI p99"
+        "BLS airline median (2007-2022)"
       ),
       file = regression_table_path
     )

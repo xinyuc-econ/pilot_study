@@ -126,3 +126,4 @@ soi_analysis_years <- analysis_years
 bls_analysis_years <- 2007:2022
 taxsim_years_soi <- soi_analysis_years
 taxsim_years_bls <- bls_analysis_years
+event_study_years_bls <- bls_analysis_years

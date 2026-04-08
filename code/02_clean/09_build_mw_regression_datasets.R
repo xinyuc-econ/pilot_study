@@ -112,10 +112,7 @@ build_case_filename <- function(case_name, panel_variant) {
 mw_cases <- tribble(
   ~case_name, ~input_file,
   "bls_airline_mean", "pilots_atr_tax_merged_bls_airline_mean.csv",
-  "bls_airline_median", "pilots_atr_tax_merged_bls_airline_median.csv",
-  "soi_p90", "pilots_atr_tax_merged_soi_p90.csv",
-  "soi_p95", "pilots_atr_tax_merged_soi_p95.csv",
-  "soi_p99", "pilots_atr_tax_merged_soi_p99.csv"
+  "bls_airline_median", "pilots_atr_tax_merged_bls_airline_median.csv"
 )
 
 panel_variants <- c("balanced", "unbalanced")
