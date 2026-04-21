@@ -1,0 +1,108 @@
+\documentclass{article}
+\usepackage{geometry}
+\geometry{tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage{array}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\allowdisplaybreaks
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage[normalem]{ulem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[flushleft]{threeparttable}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{mathtools}
+\usepackage{cancel}
+\usepackage{comment}
+\raggedbottom
+\onehalfspacing
+\usepackage{lscape}
+\usepackage{xcolor}
+\usepackage{comment}
+\usepackage{pdflscape} 
+\usepackage{ulem}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+
+
+\hypersetup{colorlinks, citecolor=blue,urlcolor=blue,allcolors=blue}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+
+\begin{document}
+	\noindent
+	Notes on using TCJA as a quasi-experimental setting for pilots project\\
+	Xinyu \\
+	04-10-26\\
+
+\noindent
+I propose the following difference-in-differences/event study design to arrive at a more causal estimate of the effect of state income taxes on pilots' residential location choices. \\
+
+\noindent
+\textbf{First difference:} pre- versus post-TCJA, with 2017 being the reference year. \\
+
+\noindent
+\textbf{Second difference:} states with a zero personal income tax rate (``zero-PIT'') versus states with positive personal income tax rates (``Not Zero-PIT"). \\
+
+\noindent
+The rationale for this DID design is the following: post-TCJA, the SALT deduction cap of \$10,000 makes zero-PIT states more attractive than non-zero-PIT states, for high-income taxpayers who potentially itemize \textit{relative to pre-TCJA}. The key idea is that, while zero-PIT states have always been attractive due to the lack of state tax liabilities, the SALT deduction cap, which increases the effective tax rate of residing in a non-zero-PIT state for itemizers, makes zero-PIT states even more attractive post-TCJA. Therefore, we can think of the zero-PIT states as the treatment group, and the non-zero-PIT states as the control group, in the sense that zero-PIT states have a more preferential tax treatment compared to non-zero-PIT states post-TCJA due to the SALT deduction cap.\footnote{Conceptually, this way of defining treatment and control groups might come off as a bit odd, since in fact, the non-zero-PIT states are the ones treated by the TCJA SALT deduction cap. However, I think my current way of defining the zero-PIT states as the treatment states is more intuitive given the context. Another concern is that all states are treated by the TCJA, which means that the SUTVA assumption is violated. In response to that, my thinking is that it could still be a valid design if I define the treatment as not TCJA per se, but the SALT deduction limit enacted under the TCJA. This is similar in spirit to the DID design comparing C-corps to S-corps pre- and post-TCJA's corporate income tax rate reduction in Kennedy et al. (2026).} \\
+
+
+\noindent
+Figure 1 below plots the number of pilots residing in zero-PIT states versus non-zero-PIT states from 2001 to 2024.\footnote{Inspired by Figure 4 in the 2013 football player paper by Kleven, Landais, and Saez.} Here I use official aggregate state-level statistics from the FAA. Both series are normalized to 1 in 2001. This figure shows that, while the trends in the number of pilots residing in zero-PIT and non-zero-PIT states were similar from 2000 to 2012, a small gap between the two emerged in 2013, and the gap widened after the enactment of TCJA. This provides some graphical evidence that more pilots decided to locate in zero-PIT states post-TCJA. \\
+
+\noindent
+The pre-trends from 2013-2017 appear to be driven almost entirely by Florida. Figure 2 below shows that after excluding Florida, the trends in the population of pilots in zero-PIT and non-zero-PIT states evolved almost identically until 2017, after which they start to diverge. There might be a story behind why more pilots chose to live in Florida starting from 2013. For example, it could be that Florida became a bigger hub for airlines in 2013, leading to a higher demand for pilots, which would be unrelated to state personal income taxes. However,  I'm not entirely sure right now what the true story is. \\
+
+	\begin{figure} [H]
+		\centering
+		\includegraphics[scale=0.5]{../output/aviationdb/figures/norm_pilot_pop_by_zero_PIT.png}
+		\caption{Number of Pilots Residing in Zero-PIT vs. Non-Zero-PIT States}
+	\end{figure}
+
+
+	\begin{figure} [H]
+		\centering
+		\includegraphics[scale=0.5]{../output/aviationdb/figures/norm_pilot_pop_by_zero_PIT_noFL.png}
+		\caption{Number of Pilots Residing in Zero-PIT vs. Non-Zero-PIT States, Florida Excluded}
+	\end{figure}
+
+\noindent
+I run the following event-study specification to examine whether the TCJA SALT deduction cap increased the number of pilots residing in zero-PIT states\footnote{Florida is included.}:
+\begin{equation} 
+	\ln N_{s,t} = ZeroPIT_s \times \sum_{t' \neq 2017} \beta_{t'} \mathbf{1}\{t=t'\} + \delta_s + \delta_t +u_{s,t} 
+\end{equation}
+\noindent
+where $\ln N_{s,t}$ is the log number of pilots residing in state $s$ in year $t$. $ZeroPIT_s$ is an indicator equal to 1 if state $s$ has no personal income tax. $\delta_s$ and $\delta_t$ denote state and year fixed effects. \\
+
+\noindent
+Figure 3 shows the event study results and reports the corresponding simple two-period DID coefficient with standard errors in parentheses. Standard errors are clustered at the state level.\footnote{Hansen's econometrics textbook cautions against regressions that involve clustering at the state level, because this is equivalent to having 51 very heterogeneous observations. However, in the literature this approach is not uncommon, see for example Sapollnik and Swonder (2025).} There unfortunately is a pre-trend in years 2013-2016. In the post period, the first few years have coefficients that are positive and significant, suggesting that the TCJA SALT deduction cap induced migration to zero-PIT states. The coefficient of interest from the simple two-period DID is 0.079 and is significant at the 10\% level. \\
+
+
+	\begin{figure} [H]
+		\centering
+		\includegraphics[scale=0.5]{../output/aviationdb/figures/pilot_pop_zero_PIT_event_study.png}
+		\caption{Event Study Results}
+	\end{figure}
+
+\textbf{Next Steps:}
+\begin{itemize}
+	\item Extend the analysis to a triple-difference: use ACS data to construct series for non-pilot groups such as high-income/bottom 50\% income population, which would serve as a third difference. In contrast to the above DID specification that tries to estimate the effect of tax changes on mobility, this triple difference design estimates the extent to which the nature of the occupation affects the mobility elasticity to taxes.
+	\item Explore a staggered DID design using major state income tax changes following Sapollnik and Swonder (2025).
+\end{itemize}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
